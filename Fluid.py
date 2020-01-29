@@ -2,6 +2,8 @@ import ProperyContainer
 
 
 class Fluid(ProperyContainer):
+    required_property = dict()
+
     # every changes execute on this class via main update
     # some properties like Re and Nu is calculated from here
     # fluid is the class which use package property to change and update phases!!!
@@ -10,7 +12,7 @@ class Fluid(ProperyContainer):
     pass
 
     def calc_bubble_point(self, T, zi):
-
+        pass
     # calc Pi_sat from....(equation)
     # calc gama_i from...
     #
