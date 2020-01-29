@@ -8,3 +8,14 @@ class Fluid(ProperyContainer):
     # some efficient prop from different phases must be calculate like efficient viscosity
     # this class has a lot of setter and getter and this class is the most concentrated class in this lib
     pass
+
+    def calc_bubble_point(self, T, zi):
+
+    # calc Pi_sat from....(equation)
+    # calc gama_i from...
+    #
+    #
+    # after all calculations which you will write here
+    # we have list of composition for each phase and bubble point
+    def calc_dew_point(self, T, zi):
+# like bubble point
