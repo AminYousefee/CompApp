@@ -3,11 +3,10 @@ import ProperyContainer
 
 class Fluid(ProperyContainer):
     required_property = dict()
-    """
-    composition
-    list of components
-    T , P
-    """
+
+    def __init__(self, T, P, components, compositions):
+        if len(components) != len(compositions):
+            raise Exception("for each component we need a composition")
 
     @property
     def Tc(self):
@@ -34,4 +33,5 @@ class Fluid(ProperyContainer):
     # after all calculations which you will write here
     # we have list of composition for each phase and bubble point
     def calc_dew_point(self, T, zi):
+        pass
 # like bubble point
