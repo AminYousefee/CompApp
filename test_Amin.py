@@ -32,3 +32,5 @@ with open("pickle_test.dat", "rb") as f:
     print(b.name)
 
 print(b.name)
+
+with open("")
