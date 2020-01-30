@@ -8,9 +8,15 @@ class Fluid(ProperyContainer):
     list of components
     T , P
     """
-    """
-    
-    """
+
+    @property
+    def Tc(self):
+        return self.__Tc
+
+    @Tc.setter
+    def Tc(self, value):
+        raise Exception("you are not allowed to change this property")
+
     # every changes execute on this class via main update
     # some properties like Re and Nu is calculated from here
     # fluid is the class which use package property to change and update phases!!!
