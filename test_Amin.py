@@ -33,4 +33,5 @@ with open("pickle_test.dat", "rb") as f:
 
 print(b.name)
 
-with open("")
+with open("components\\test.txt", "r") as f:
+    print(f.read())
