@@ -1,17 +1,21 @@
 class Test:
     counter = 0
 
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-        Test.counter += 1
+    def __init__(self, name):
+        self.__name = name
 
-    @staticmethod
-    def get_count():
-        return Test.counter
+    @property
+    def name(self):
+        print("getter of name")
+        return self.__name
+
+    @name.setter
+    def name(self, value):
+        self.__name = value
+        print("name setter")
 
 
-a = Test(1, 2)
-b = Test(2, 3)
-
-print(Test.counter)
+a = Test("Mina")
+print(a.name)
+a.name = "Amin"
+print(a.name)
