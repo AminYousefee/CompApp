@@ -1,7 +1,4 @@
-import ProperyContainer
-
-
-class Component(ProperyContainer):
+class Component():
     required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25"]
     all_props = dict()
 
