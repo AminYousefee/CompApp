@@ -37,7 +37,9 @@ class Fluid(ProperyContainer):
         return sigma
 
     def calc_alpha(self, EoS):
-        pass
+        for component in self.components:
+            k = component.calc_k(EoS)
+            component.calc_alpha(k, self.T)
 
     @property
     def T(self):
@@ -76,10 +78,10 @@ class Fluid(ProperyContainer):
     # fluid is the class which use package property to change and update phases!!!
     # some efficient prop from different phases must be calculate like efficient viscosity
     # this class has a lot of setter and getter and this class is the most concentrated class in this lib
-    pass
 
     def calc_bubble_point(self, EoS):
-        pass
+        am = self.calc_a(EoS)
+        bm = self.calc_b(EoS)
 
     # calc Pi_sat from....(equation)
     # calc gama_i from...

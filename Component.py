@@ -32,6 +32,20 @@ class Component():
     def calc_b(self, EoS):
         self.__b = EoS.b_coeff * EoS.R * self.Tc / self.Pc
 
+    def calc_k(self, EoS):
+        a = EoS.alpha_coeffs[0]
+        b = EoS.alpha_coeffs[1]
+        c = EoS.alpha_coeffs[2]
+        return a + b * self.omega - c * (self.omega ** 2)
+
+    def calc_alpha(self, k, T):
+        Tr = T / self.Tc
+        a = 1 - (Tr ** 0.5)
+        b = k * a
+        c = 1 + b
+        self.__alpha = c ** 2
+        return self.__alpha
+
     @property
     def a(self):
         return self.__a
