@@ -4,7 +4,7 @@ class Component():
 
     def __init__(self, initial_prop_dict, EoS):
         if len(Component.required_props_name) != len(initial_prop_dict):
-            raise
+            raise Exception
         for prop_name in Component.required_props_name:
             if prop_name in initial_prop_dict:
                 if prop_name == "name":

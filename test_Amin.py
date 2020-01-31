@@ -1,37 +1,25 @@
-import pickle
-class Test:
+from Just_name import Just_name
+
+
+class Name_Last(Just_name):
     counter = 0
 
-    def __init__(self, name):
-        self.__name = name
+    def say_hello(self):
+        print("hello" + self.name + " " + self.last_name)
 
+    def __init__(self, name, last_name):
+        super().__init__(name)
+        self.last_name = last_name
+
+
+"""
     @property
-    def name(self):
+    def last_name(self):
         print("getter of name")
-        return self.__name
+        return self.__last_name
 
-    @name.setter
-    def name(self, val):
-        self.__name = val
+    @last_name.setter
+    def last_name(self, val):
+        self.__last_name = val
         print("name setter")
-
-
-a = Test("Mina")
-print(a.name)
-a.name = "Amin"
-print(a.name)
-b = Test("mammad")
-print(b.name)
-with open("pickle_test.dat", "wb") as file:
-    pickle.dump(a, file)
-    print("a is pickled")
-
-with open("pickle_test.dat", "rb") as f:
-    b = pickle.load(f)
-    print("b ia like a and it's name must be Amin")
-    print(b.name)
-
-print(b.name)
-
-with open("components\\test.txt", "r") as f:
-    print(f.read())
+"""
