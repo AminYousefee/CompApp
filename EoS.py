@@ -26,6 +26,17 @@ class EoS:
         pass
 
     def calc_z_liquid(self, fluid):
+        q = fluid.am / (fluid.bm * EoS.R * fluid.T)
+        beta = fluid.bm * fluid.P / (EoS.R * fluid.T)
+        old_z = 1
+        z_calculator = lambda z: beta + (z + self.__eps * beta) * (z + self.__omega * beta) * (1 + beta - z) / (
+                q * beta)
+        new_z = z_calculator(old_z)
+        accuracy = 10 ** -7
+        while abs(new_z - old_z) > accuracy:
+            old_z = new_z
+            new_z = z_calculator(old_z)
+        return new_z
         # this method use guess and error algorithm to get z
         # z here is a number and not a list
         pass

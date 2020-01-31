@@ -5,7 +5,6 @@ from Component import Component
 
 class PureComponent(Component):
     all_pure_components = dict()  # component_name: obj of component
-    required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25"]
 
     @staticmethod
     def load_components():

@@ -15,10 +15,12 @@ class Fluid(ProperyContainer):
         self.__compositions = compositions
 
     def calc_a(self, EoS):
+        self.calc_alpha(EoS)  # for all component calc alpha
         for component in self.components:
             component.calc_a(EoS)
         iterator_count = len(self.components)
         sigma = 0
+        # calc am
         for j in range(iterator_count):
             for i in range(iterator_count):
                 other = ((self.components[i].a * self.components[j].a) ** 0.5)
@@ -78,10 +80,27 @@ class Fluid(ProperyContainer):
     # fluid is the class which use package property to change and update phases!!!
     # some efficient prop from different phases must be calculate like efficient viscosity
     # this class has a lot of setter and getter and this class is the most concentrated class in this lib
+    @property
+    def am(self):
+        return self.__am
+
+    @am.setter
+    def am(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def bm(self):
+        return self.__bm
+
+    @bm.setter
+    def bm(self, value):
+        raise Exception("you are not allowed to change this property")
 
     def calc_bubble_point(self, EoS):
         am = self.calc_a(EoS)
         bm = self.calc_b(EoS)
+        z_liquid = EoS.calc_z_liquid(self)
+        ro =
 
     # calc Pi_sat from....(equation)
     # calc gama_i from...

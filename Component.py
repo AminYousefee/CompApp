@@ -5,7 +5,8 @@ class Component:
         pass
 
     def calc_a(self, EoS):
-        self.__a = EoS.a_coeff * 0.45724 * (EoS.R ** 2) * (self.Tc ** 2) / self.Pc
+        a = EoS.a_coeff * 0.45724 * (EoS.R ** 2) * (self.Tc ** 2) / self.Pc
+        self.__a = self.__alpha * a
         self.__all_props["a"] = self.__a
 
     def calc_b(self, EoS):
