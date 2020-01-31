@@ -53,3 +53,9 @@ class PureComponent(Component):
         with open(path, "wb") as file:
             pickle.dump(properties_dict, file)
         print("file saved")
+
+
+# todo
+"""
+we must create some components and save theme
+"""
