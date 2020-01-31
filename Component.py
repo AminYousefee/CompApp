@@ -1,8 +1,16 @@
+from math import log
 class Component:
     required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25"]
 
     def __init__(self):
         pass
+
+    def calc_Gr(self, EoS, composition, ro, fluid):
+        a = log(1 - ro * self.__b)
+        b = EoS.R * fluid.T * (composition - 1 - composition * a) * composition
+        q = fluid.am / (fluid.bm * EoS.R * fluid.T)
+        c = 1 / (EoS.omega - EoS.eps)
+        d = (1 + EoS.omega *) / ()
 
     def calc_a(self, EoS):
         a = EoS.a_coeff * 0.45724 * (EoS.R ** 2) * (self.Tc ** 2) / self.Pc

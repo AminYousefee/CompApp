@@ -96,11 +96,18 @@ class Fluid(ProperyContainer):
     def bm(self, value):
         raise Exception("you are not allowed to change this property")
 
+    def calc_Gr_i(self, EoS, ro):
+        for i in range(len(self.components)):
+            component = self.components[i]
+            composition = self.compositions[i]
+            component.calc_Gr(EoS, composition, ro, self)
+
     def calc_bubble_point(self, EoS):
         am = self.calc_a(EoS)
         bm = self.calc_b(EoS)
         z_liquid = EoS.calc_z_liquid(self)
-        ro =
+        ro = self.P / (z_liquid * EoS.R * self.T)
+        self.calc_Gr_i(EoS, ro)
 
     # calc Pi_sat from....(equation)
     # calc gama_i from...
