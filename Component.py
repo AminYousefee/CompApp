@@ -1,6 +1,5 @@
 class Component():
-    required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25", "EoS"]
-    R = 8.3145
+    required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25"]
 
     def __init__(self, initial_prop_dict, EoS):
         if len(Component.required_props_name) != len(initial_prop_dict):
@@ -23,29 +22,15 @@ class Component():
                     self.__visco25 = initial_prop_dict["viscosity25"]
                 if prop_name == "Cp coefficients":
                     self.__Cp_coeff = initial_prop_dict["Cp coefficients"]
-                if prop_name == "EoS":
-                    self.__EoS = initial_prop_dict["EoS"]
-            self.__fluid = None
-            self.__fluid_number_setter = 0
             self.__all_props = initial_prop_dict.copy()
-            self.__a = EoS.a_calculator(self)
-            self.__b = EoS.b_calculator(self)
-            self.__k = EoS.k_calculator(self)
-            self.__alpha = EoS.alpha_calculator(self)
             # these 4 methods must be added for each obj of EoS class
         # now other properties must be calculate from initial properties
 
-    @property
-    def fluid(self):
-        return self.fluid
+    def calc_a(self, EoS):
+        self.__a = EoS.a_coeff * 0.45724 * (EoS.R ** 2) * (self.Tc ** 2) / self.Pc
 
-    @fluid.setter
-    def fluid(self, fluid):
-        self.__fluid_number_setter -= 1
-        if not self.__fluid_number_setter < 0:
-            self.__fluid = fluid
-        else:
-            raise Exception("you can't  change the fluid")
+    def calc_b(self, EoS):
+        self.__b = EoS.b_coeff * EoS.R * self.Tc / self.Pc
 
     @property
     def a(self):
@@ -149,12 +134,4 @@ class Component():
 
     @Cp_coeff.setter
     def Cp_coeff(self, value):
-        raise Exception("you are not allowed to change this property")
-
-    @property
-    def EoS(self):
-        return self.__EoS
-
-    @EoS.setter
-    def EoS(self, value):
         raise Exception("you are not allowed to change this property")

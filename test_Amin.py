@@ -1,8 +1,10 @@
-from Just_name import Just_name
+from Just_name import *
 
 
 class Name_Last(Just_name):
     counter = 0
+    obj_list_of_name_last = []
+    class_attr = 8
 
     def say_hello(self):
         print("hello" + self.name + " " + self.last_name)
@@ -12,6 +14,8 @@ class Name_Last(Just_name):
         self.last_name = last_name
 
 
+amin = Name_Last("amin", "yousefi")
+print(amin.class_attr)
 """
     @property
     def last_name(self):

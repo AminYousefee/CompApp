@@ -8,6 +8,32 @@ class EoS:
         self.__eps = eps
         self.__omega = omega
 
+    @staticmethod
+    def create_pr():
+        a_coeff = 0.4572
+        b_coeff = 0.0778
+        alpha_coeff = [0.37464, 1.54226, 0.26992]
+        eps = 1 - (2 ** 0.5)
+        omega = 1 + (2 ** 0.5)
+        return EoS(a_coeff, b_coeff, alpha_coeff, eps, omega)
+
+    @staticmethod
+    def create_srk():
+        pass
+
+    def calc_z(self, fluid):
+        # this method returns a list(usually contains 3 values)
+        pass
+
+    def calc_z_liquid(self, fluid):
+        # this method use guess and error algorithm to get z
+        # z here is a number and not a list
+        pass
+
+    def calc_z_gas(self, fluid):
+        # like upper method with diff eq
+        pass
+
     @property
     def a_coeff(self):
         return self.__a_coeff

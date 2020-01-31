@@ -14,13 +14,38 @@ class Fluid(ProperyContainer):
             component.fluid = self
         self.__compositions = compositions
 
+    def calc_a(self, EoS):
+        for component in self.components:
+            component.calc_a(EoS)
+        iterator_count = len(self.components)
+        sigma = 0
+        for j in range(iterator_count):
+            for i in range(iterator_count):
+                other = ((self.components[i].a * self.components[j].a) ** 0.5)
+                sigma += self.compositions[i] * self.compositions[j] * other
+        self.__am = sigma
+        return sigma
+
+    def calc_b(self, EoS):
+        iterator_count = len(self.components)
+        for component in self.components:
+            component.calc_b(EoS)
+        sigma = 0
+        for i in range(iterator_count):
+            sigma += self.components[i].b * self.compositions[i]
+        self.__bm = sigma
+        return sigma
+
+    def calc_alpha(self, EoS):
+        pass
+
     @property
     def T(self):
         return self.__T
 
     @T.setter
     def T(self, value):
-        raise Exception("you are not allowed to change this property")
+        self.__T = value
 
     @property
     def P(self):
@@ -46,21 +71,6 @@ class Fluid(ProperyContainer):
     def compositions(self, value):
         raise Exception("you are not allowed to change this property")
 
-    def calc_am(self):
-        iterator_count = len(self.components)
-        sigma = 0
-        for j in range(iterator_count):
-            for i in range(iterator_count):
-                a = ((self.components[i].a * self.components[j].a) ** 0.5)
-                sigma += self.compositions[i] * self.compositions[j] * a
-        return sigma
-
-    def calc_bm(self):
-        sigma = 0
-        for i in range(self.components):
-            sigma += self.compositions[i] * self.components[i].b
-        return sigma
-
     # every changes execute on this class via main update
     # some properties like Re and Nu is calculated from here
     # fluid is the class which use package property to change and update phases!!!
@@ -68,7 +78,7 @@ class Fluid(ProperyContainer):
     # this class has a lot of setter and getter and this class is the most concentrated class in this lib
     pass
 
-    def calc_bubble_point(self, T, zi):
+    def calc_bubble_point(self, EoS):
         pass
 
     # calc Pi_sat from....(equation)
@@ -77,6 +87,6 @@ class Fluid(ProperyContainer):
     #
     # after all calculations which you will write here
     # we have list of composition for each phase and bubble point
-    def calc_dew_point(self, T, zi):
+    def calc_dew_point(self, EoS):
         pass
 # like bubble point
