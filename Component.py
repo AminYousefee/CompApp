@@ -141,6 +141,14 @@ class Component:
         raise Exception("you are not allowed to change this property")
 
     @property
+    def gama_i(self):
+        return self.__gama_i
+
+    @gama_i.setter
+    def gama_i(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
     def GbarE(self):
         return self.__GbarE
 

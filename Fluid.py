@@ -168,8 +168,10 @@ class Fluid(ProperyContainer):
         #  calc Gbar i for each component from 3 up items
         self.calc_GbarE_i(EoS)
         #  calc gama i for each component
-        self.calc_gama_i()
+        self.calc_gama_i(EoS)
         #  calc P with assumption PHI i = 1
+        PHI_i = 1
+        bubble_P = self.calc_bubble_P(PHI_i)
         #  calc y i for each component
         #
 
