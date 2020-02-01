@@ -149,9 +149,9 @@ class Fluid(ProperyContainer):
             DGr_Dni = component.calc_DGr_Dni(EoS, composition, self)
             component.calc_GbarE_i(Gr, ni, DGr_Dni)
 
-    def calc_gama_i(self):
+    def calc_gama_i(self, EoS):
         for component in self.components:
-            component.calc_gama_i()
+            component.calc_gama_i(self.T, EoS)
 
     def calc_bubble_point(self, EoS):
         am = self.calc_a(EoS)

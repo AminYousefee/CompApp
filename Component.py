@@ -71,6 +71,10 @@ class Component:
         self.__GbarE = GbarE
         return GbarE
 
+    def calc_gama_i(self, T, EoS):
+        self.__gama_i = self.__GbarE / (EoS.R * T)
+        return self.__gama_i
+
     def calc_z_i(self, T, P, EoS):
         a = self.__a
         b = self.__b
