@@ -1,16 +1,92 @@
 from math import log, exp
+
+
 class Component:
     required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25", "Antoine coeffs"]
 
     def __init__(self):
         pass
 
-    def calc_Gr(self, EoS, composition, ro, fluid):
-        a = log(1 - ro * self.__b)
-        b = EoS.R * fluid.T * (composition - 1 - composition * a) * composition
-        q = fluid.am / (fluid.bm * EoS.R * fluid.T)
-        c = 1 / (EoS.omega - EoS.eps)
-        d = (1 + EoS.omega *) / ()
+    def calc_Dam_Dni(self, fluid):
+        n = fluid.n
+        am = fluid.am
+        ai = self.__a
+        ans1 = 2 / n
+        ans2 = 0
+        for j in range(len(fluid.components)):
+            component = fluid.components[j]
+            composition = fluid.compositions[j]
+            aj = component.a
+            ans2 += composition * ((ai * aj) ** 0.5) - am
+        return ans1 * ans2
+
+    def calc_Dbm_Dni(self, fluid):
+        return (self.b - fluid.bm) / fluid.n
+
+    def calc_Dq_Dni(self, fluid, Dam_Dni, Dbm_Dni):
+        term1 = Dam_Dni / fluid.bm
+        term2 = fluid.am * Dbm_Dni / (fluid.bm ** 2)
+        return term1 - term2
+
+    def calc_DI_Dni(self, EoS, fluid, Dbm_Dni):
+        ro = fluid.P / (fluid.T * EoS.R * fluid.z)
+        term1 = (ro * EoS.omega) / (1 + EoS.omega * ro * fluid.bm)
+        term2 = (ro * EoS.eps) / (1 + EoS.eps * ro * fluid.bm)
+        return Dbm_Dni * (term1 - term2)
+
+    def calc_Dz_Dni(self, fluid, Dbm_Dni, EoS, Dq_Dni):
+        ro = fluid.P / (fluid.T * EoS.R * fluid.z)
+        term1 = ro * Dbm_Dni / (1 - ro * fluid.bm) ** 2
+        term2 = ro * fluid.bm * Dq_Dni / ((1 + EoS.eps * ro * fluid.bm) * (1 + EoS.omega * ro * fluid.bm))
+        term3 = ro * Dbm_Dni / ((1 + EoS.eps * ro * fluid.bm) * (1 + EoS.omega * ro * fluid.bm))
+        term4 = (ro ** 2) * fluid.bm * (EoS.eps ** 2) / (
+                ((1 + EoS.eps * ro * fluid.bm) ** 2) * (1 + EoS.omega * ro * fluid.bm))
+        term5 = (ro ** 2) * fluid.bm * EoS.omega * Dbm_Dni / (
+                (1 + EoS.eps * ro * fluid.bm) * ((1 + EoS.omega * ro * fluid.bm) ** 2))
+        term6 = fluid.q * (term3 - term4 - term5)
+        term7 = term1 - term2 - term6
+        return term7
+
+    def calcu_DGr_Dni(self, fluid, Dz_Dni, Dbm_Dni, EoS, Dq_Dni, DI_Dni):
+        ro = fluid.P / (fluid.T * EoS.R * fluid.z)
+        term1 = ro * Dbm_Dni * fluid.z / (1 - ro * fluid.bm)
+        term2 = 1 / (EoS.omega - EoS.eps)
+        I = term2 * log((1 + EoS.omega * ro * fluid.bm) / (1 + EoS.eps * ro * fluid.bm))
+        q = EoS.calc_q(fluid.am, fluid.bm, fluid.T)
+        term3 = Dz_Dni * log(1 - ro * fluid.bm - I * Dq_Dni - q * DI_Dni)
+        ans = EoS.R * fluid.T * (Dz_Dni + term1 - term3)
+        return ans
+
+    def calc_DGr_Dni(self, EoS, composition, fluid):
+        Dam_Dni = self.calc_Dam_Dni(fluid)
+        Dbm_Dni = self.calc_Dbm_Dni(fluid)
+        Dq_Dni = self.calc_Dq_Dni(fluid, Dam_Dni, Dbm_Dni)
+        DI_Dni = self.calc_DI_Dni(EoS, fluid, Dbm_Dni)
+        Dz_Dni = self.calc_Dz_Dni(fluid, Dbm_Dni, EoS, Dq_Dni)
+        DGr_Dni = self.calcu_DGr_Dni(fluid, Dz_Dni, Dbm_Dni, EoS, Dq_Dni, DI_Dni)
+        return DGr_Dni
+
+    def calc_GbarE_i(self, Gr, ni, DGr_Dni):
+        GbarE = Gr + ni * DGr_Dni - self.__Gr
+        self.__GbarE = GbarE
+        return GbarE
+
+    def calc_z_i(self, T, P, EoS):
+        a = self.__a
+        b = self.__b
+        q = EoS.calc_q(a, b, T)
+        beta = EoS.calc_beta(b, P, T)
+        z = EoS.calc_z_liquid(q, beta)
+        self.__z = z
+        return z
+
+    def calc_Gr(self, EoS, T, P):
+        z = self.__z
+        a = self.__a
+        b = self.__b
+        Gr = EoS.calc_Gr(z, T, P, a, b)
+        self.__Gr = Gr
+        return Gr
 
     def calc_a(self, EoS):
         a = EoS.a_coeff * 0.45724 * (EoS.R ** 2) * (self.Tc ** 2) / self.Pc
@@ -58,6 +134,30 @@ class Component:
 
     @a.setter
     def a(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def GbarE(self):
+        return self.__GbarE
+
+    @GbarE.setter
+    def GbarE(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def Gr(self):
+        return self.__Gr
+
+    @Gr.setter
+    def Gr(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def z(self):
+        return self.__z
+
+    @z.setter
+    def z(self, value):
         raise Exception("you are not allowed to change this property")
 
     @property
@@ -147,4 +247,3 @@ class Component:
     @Cp_coeff.setter
     def Cp_coeff(self, value):
         raise Exception("you are not allowed to change this property")
-

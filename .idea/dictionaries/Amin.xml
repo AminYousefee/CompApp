@@ -2,9 +2,12 @@
   <dictionary name="Amin">
     <words>
       <w>amin</w>
+      <w>calcu</w>
       <w>coeff</w>
       <w>coeffs</w>
+      <w>gbar</w>
       <w>psat</w>
+      <w>rond</w>
       <w>visco</w>
     </words>
   </dictionary>

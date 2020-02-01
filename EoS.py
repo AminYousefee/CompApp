@@ -1,3 +1,15 @@
+import math
+
+
+def alpha_calculator(component):
+    T = component.fluid.T
+    Tr = T / component.Tc
+    a = 1 - Tr ** 0.5
+    b = component.k * a
+    c = 1 + b
+    return c ** 2
+
+
 class EoS:
     R = 8.3145
 
@@ -33,7 +45,7 @@ class EoS:
     def calc_q(a, b, T):
         return a / (b * EoS.R * T)
 
-    def calc_z_liquid_fluid(self, q, beta):
+    def calc_z_liquid(self, q, beta):
         old_z = 1
         z_calculator = lambda z: beta + (z + self.__eps * beta) * (z + self.__omega * beta) * (1 + beta - z) / (
                 q * beta)
@@ -46,6 +58,16 @@ class EoS:
         # this method use guess and error algorithm to get z
         # z here is a number and not a list
         pass
+
+    def calc_Gr(self, z, T, P, a, b):
+        ro = P / (z * EoS.R * T)
+        q = EoS.calc_q(a, b, T)
+        term1 = math.log(1 - ro * b)
+        term2 = EoS.R * T * (z - 1 - term1) * z
+        term3 = 1 / (self.omega - self.eps)
+        term4 = q * term3 * math.log((1 + self.omega * ro * b) / (1 + self.eps * ro * b))
+        Gr = term2 - term4
+        return Gr
 
     def calc_z_gas(self, fluid):
         # like upper method with diff eq
@@ -103,13 +125,6 @@ class EoS:
         c = self.alpha_coeffs[2]
         return a + b * component.omega - c * (component.omega ** 2)
 
-    def alpha_calculator(self, component):
-        T = component.fluid.T
-        Tr = T / component.Tc
-        a = 1 - Tr ** 0.5
-        b = component.k * a
-        c = 1 + b
-        return c ** 2
     # now we need to calc alpha for each component
     # we need tempreture but temp is belonged to fluid and here we don't access Fluid
     #

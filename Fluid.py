@@ -4,9 +4,10 @@ import ProperyContainer
 class Fluid(ProperyContainer):
     required_property = dict()
 
-    def __init__(self, T, P, components, compositions):
+    def __init__(self, n, T, P, components, compositions):
         if len(components) != len(compositions):
             raise Exception("for each component we need a composition")
+        self.__n = n
         self.__T = T
         self.__P = P
         self.__components = components
@@ -14,7 +15,7 @@ class Fluid(ProperyContainer):
             component.fluid = self
         self.__compositions = compositions
 
-    def calc_a(self, EoS):
+    def calc_am(self, EoS):
         self.calc_alpha(EoS)  # for all component calc alpha
         for component in self.components:
             component.calc_a(EoS)
@@ -28,7 +29,7 @@ class Fluid(ProperyContainer):
         self.__am = sigma
         return sigma
 
-    def calc_b(self, EoS):
+    def calc_bm(self, EoS):
         iterator_count = len(self.components)
         for component in self.components:
             component.calc_b(EoS)
@@ -50,6 +51,14 @@ class Fluid(ProperyContainer):
     @T.setter
     def T(self, value):
         self.__T = value
+
+    @property
+    def n(self):
+        return self.__n
+
+    @n.setter
+    def T(self, value):
+        self.__n = value
 
     @property
     def P(self):
@@ -96,31 +105,70 @@ class Fluid(ProperyContainer):
     def bm(self, value):
         raise Exception("you are not allowed to change this property")
 
-    def calc_Gr_i(self, EoS, ro):
-        for i in range(len(self.components)):
-            component = self.components[i]
-            composition = self.compositions[i]
-            component.calc_Gr(EoS, composition, ro, self)
+    def calc_Gr(self, EoS):
+        z = self.__z
+        T = self.T
+        P = self.P
+        a = self.am
+        b = self.bm
+        Gr = EoS.calc_Gr(z, T, P, a, b)
+        self.__Gr = Gr
+        return Gr
+
+    def calc_Gr_i(self, EoS):
+        for component in self.components:
+            T = self.T
+            P = self.P
+            component.calc_Gr(EoS, T, P)
 
     def calc_Psat_i(self):
         for component in self.components:
             component.calc_Psat(self.T)
 
+    def calc_z(self, EoS):
+        a = self.am
+        b = self.bm
+        T = self.T
+        P = self.P
+        q = EoS.calc_q(a, b, T)
+        beta = EoS.calc_beta(b, P, T)
+        EoS.calc_z_liquid(q, beta)
+
+    def calc_z_i(self, EoS):
+        for component in self.components:
+            T = self.T
+            P = self.P
+            component.calc_z_i(T, P, EoS)
+
+    def calc_GbarE_i(self, EoS):
+        Gr = self.calc_Gr(EoS)
+        for i in range(len(self.components)):
+            component = self.components[i]
+            composition = self.compositions[i]
+            ni = self.__n * composition
+            DGr_Dni = component.calc_DGr_Dni(EoS, composition, self)
+            component.calc_GbarE_i(Gr, ni, DGr_Dni)
+
+    def calc_gama_i(self):
+        for component in self.components:
+            component.calc_gama_i()
+
     def calc_bubble_point(self, EoS):
         am = self.calc_a(EoS)
         bm = self.calc_b(EoS)
-        z_liquid = EoS.calc_z_liquid(self, EoS.calc_beta())
-        ro = self.P / (z_liquid * EoS.R * self.T)
-        self.calc_Gr_i(EoS, ro)
+        self.calc_z(EoS)
         #  calc log(p sat i) for each component
         self.calc_Psat_i()
         #  calc z for each component(liquid phase)
-
+        self.calc_z_i(EoS)
         #  calc Gr i for each component
+        self.calc_Gr_i(EoS)
         #  calc Gr for fluid
         #  calc rond(Gr) / rond(ni) for each component
         #  calc Gbar i for each component from 3 up items
+        self.calc_GbarE_i(EoS)
         #  calc gama i for each component
+        self.calc_gama_i()
         #  calc P with assumption PHI i = 1
         #  calc y i for each component
         #
