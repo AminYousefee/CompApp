@@ -35,6 +35,8 @@ class PureComponent(Component):
                     self.__visco25 = initial_prop_dict["viscosity25"]
                 if prop_name == "Cp coefficients":
                     self.__Cp_coeff = initial_prop_dict["Cp coefficients"]
+                if prop_name == "Antoine coeff":
+                    self.__Antoine_coeffs = initial_prop_dict["Antoine coeffs"]
         PureComponent.all_pure_components[self.__name] = self
         self.__all_props = initial_prop_dict.copy()  # this line must be deleted after saving pure components
 

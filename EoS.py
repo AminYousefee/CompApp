@@ -25,9 +25,15 @@ class EoS:
         # this method returns a list(usually contains 3 values)
         pass
 
-    def calc_z_liquid(self, fluid):
-        q = fluid.am / (fluid.bm * EoS.R * fluid.T)
-        beta = fluid.bm * fluid.P / (EoS.R * fluid.T)
+    @staticmethod
+    def calc_beta(b, P, T):
+        return b * P / (EoS.R * T)
+
+    @staticmethod
+    def calc_q(a, b, T):
+        return a / (b * EoS.R * T)
+
+    def calc_z_liquid_fluid(self, q, beta):
         old_z = 1
         z_calculator = lambda z: beta + (z + self.__eps * beta) * (z + self.__omega * beta) * (1 + beta - z) / (
                 q * beta)

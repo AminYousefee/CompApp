@@ -1,3 +1,5 @@
+import math
+
 from Just_name import *
 
 
@@ -14,8 +16,7 @@ class Name_Last(Just_name):
         self.last_name = last_name
 
 
-amin = Name_Last("amin", "yousefi")
-print(amin.class_attr)
+print(math.exp(1))
 """
     @property
     def last_name(self):

@@ -102,12 +102,28 @@ class Fluid(ProperyContainer):
             composition = self.compositions[i]
             component.calc_Gr(EoS, composition, ro, self)
 
+    def calc_Psat_i(self):
+        for component in self.components:
+            component.calc_Psat(self.T)
+
     def calc_bubble_point(self, EoS):
         am = self.calc_a(EoS)
         bm = self.calc_b(EoS)
-        z_liquid = EoS.calc_z_liquid(self)
+        z_liquid = EoS.calc_z_liquid(self, EoS.calc_beta())
         ro = self.P / (z_liquid * EoS.R * self.T)
         self.calc_Gr_i(EoS, ro)
+        #  calc log(p sat i) for each component
+        self.calc_Psat_i()
+        #  calc z for each component(liquid phase)
+
+        #  calc Gr i for each component
+        #  calc Gr for fluid
+        #  calc rond(Gr) / rond(ni) for each component
+        #  calc Gbar i for each component from 3 up items
+        #  calc gama i for each component
+        #  calc P with assumption PHI i = 1
+        #  calc y i for each component
+        #
 
     # calc Pi_sat from....(equation)
     # calc gama_i from...

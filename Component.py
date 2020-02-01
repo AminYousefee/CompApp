@@ -1,6 +1,6 @@
-from math import log
+from math import log, exp
 class Component:
-    required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25"]
+    required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25", "Antoine coeffs"]
 
     def __init__(self):
         pass
@@ -35,6 +35,22 @@ class Component:
         self.__alpha = c ** 2
         self.__all_props["alpha"] = self.__alpha
         return self.__alpha
+
+    def calc_Psat(self, T):
+        A = self.Antoine_coeffs[0]
+        B = self.Antoine_coeffs[1]
+        C = self.Antoine_coeffs[2]
+        Psat = exp(A - B / (T + C))
+        self.__Psat = Psat
+        return Psat
+
+    @property
+    def Antoine_coeffs(self):
+        return self.__Antoine_coeffs
+
+    @Antoine_coeffs.setter
+    def Antoine_coeffs(self, value):
+        raise Exception("you are not allowed to change this property")
 
     @property
     def a(self):
@@ -131,3 +147,4 @@ class Component:
     @Cp_coeff.setter
     def Cp_coeff(self, value):
         raise Exception("you are not allowed to change this property")
+
