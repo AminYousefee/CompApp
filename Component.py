@@ -5,7 +5,7 @@ class Component:
     required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25", "Antoine coeffs"]
 
     def __init__(self):
-        pass
+        self.PHI = 1
 
     def calc_Dam_Dni(self, fluid):
         n = fluid.n
@@ -124,6 +124,14 @@ class Component:
         self.__Psat = Psat
         return Psat
 
+    def set_yi_bubble(self, composition, gama, Psat, bubble_P):
+        PHI = self.__PHI
+        y_i = composition * gama * Psat / (PHI * bubble_P)
+        self.__yi_bubble = y_i
+
+    def set_PHI_1(self):
+        self.__PHI = 1
+
     @property
     def Antoine_coeffs(self):
         return self.__Antoine_coeffs
@@ -138,6 +146,30 @@ class Component:
 
     @a.setter
     def a(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def yi_bubble(self):
+        return self.__yi_bubble
+
+    @yi_bubble.setter
+    def yi_bubble(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def PHI(self):
+        return self.__PHI
+
+    @PHI.setter
+    def PHI(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def Psat(self):
+        return self.__Psat
+
+    @Psat.setter
+    def Psat(self, value):
         raise Exception("you are not allowed to change this property")
 
     @property

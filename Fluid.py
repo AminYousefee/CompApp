@@ -153,6 +153,25 @@ class Fluid(ProperyContainer):
         for component in self.components:
             component.calc_gama_i(self.T, EoS)
 
+    def calc_bubble_P(self):
+        bubble_P = 0
+        for i in range(len(self.components)):
+            component = self.components[i]
+            composition = self.compositions[i]
+            gama = component.gama_i
+            Psat = component.Psat
+            PHI = component.PHI
+            bubble_P += composition * gama * Psat / PHI
+        return bubble_P
+
+    def calc_bubble_y_i(self, bubble_P):
+        for i in range(self.components):
+            component = self.components[i]
+            composition = self.compositions[i]
+            gama = component.gama_i
+            Psat = component.Psat
+            component.set_yi_bubble(composition, gama, Psat, bubble_P)
+
     def calc_bubble_point(self, EoS):
         am = self.calc_a(EoS)
         bm = self.calc_b(EoS)
@@ -170,8 +189,11 @@ class Fluid(ProperyContainer):
         #  calc gama i for each component
         self.calc_gama_i(EoS)
         #  calc P with assumption PHI i = 1
-        PHI_i = 1
-        bubble_P = self.calc_bubble_P(PHI_i)
+        for component in self.components:
+            component.set_PHI_1()
+        bubble_P = self.calc_bubble_P()
+        self.calc_bubble_y_i(bubble_P)
+
         #  calc y i for each component
         #
 
