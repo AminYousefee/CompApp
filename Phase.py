@@ -3,11 +3,11 @@ from math import log
 import ProperyContainer
 
 
-def calc_H_ig_i(Antoine_coeffs, T, T0):
-    A = Antoine_coeffs[0]
-    B = Antoine_coeffs[1]
-    C = Antoine_coeffs[2]
-    D = Antoine_coeffs[3]
+def calc_H_ig_i(cp_coeffs, T, T0):
+    A = cp_coeffs[0]
+    B = cp_coeffs[1]
+    C = cp_coeffs[2]
+    D = cp_coeffs[3]
     H_ig_i = A * (T - T0) + (B / 2) * (T ** 2 - T0 ** 2) + (C / 3) * (T ** 3 - T0 ** 3) - (D / 3) * (
             1 / (T ** 3) - (1 / (T0 ** 3)))
     return H_ig_i
@@ -96,7 +96,7 @@ class Phase(ProperyContainer):
         for i in range(component_count):
             component = fluid.components[i]
             composition = self.compositions[i]
-            H_ig_i = calc_H_ig_i(component.Antoine_coeffs, fluid.T, 298)
+            H_ig_i = calc_H_ig_i(component.Cp_coeff, fluid.T, 298)
             H_ig += composition * H_ig_i
         return H_ig
 
