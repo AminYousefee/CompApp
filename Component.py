@@ -5,7 +5,7 @@ class Component:
     required_props_name = ["name", "Tc", "Pc", "omega", "MW", "Tnb", "viscosity25", "Antoine coeffs"]
 
     def __init__(self):
-        self.PHI = 1
+        pass
 
     def calc_Dam_Dni(self, fluid, am, compositions):
         n = fluid.n

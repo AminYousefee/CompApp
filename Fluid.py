@@ -278,6 +278,7 @@ class Fluid(ProperyContainer):
             yi_list = [0] * len(self.components)
             yi_list[i] = 1
             list_DGri_Dni_gas2 = self.calc_DGri_Dni(am, bm, z_gas, yi_list, EoS)
+            DGri_Dni_gas = list_DGri_Dni_gas2[i]
 
     def calc_bubble_point(self, EoS):
         amL = self.calc_am(EoS, self.compositions)
