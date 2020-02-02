@@ -274,11 +274,22 @@ class Fluid(ProperyContainer):
         return list_phi_i
 
     def calc_ln_phi_i_hat_sat(self, Gr_gas, T, EoS, n, am, bm, z_gas):
+        list_DGri_Dni = []
         for i in range(len(self.components)):
             yi_list = [0] * len(self.components)
             yi_list[i] = 1
             list_DGri_Dni_gas2 = self.calc_DGri_Dni(am, bm, z_gas, yi_list, EoS)
             DGri_Dni_gas = list_DGri_Dni_gas2[i]
+            list_DGri_Dni.append(DGri_Dni_gas)
+        list_phi_i_hat_sat = self.calc_phi_i_hat(Gr_gas, T, EoS, n, list_DGri_Dni)
+        return list_phi_i_hat_sat
+
+    def calc_PHI(self, list_phi_i_hat, list_phi_i_hat_sat):
+        list_PHI = []
+        for i in range(len(self.components)):
+            PHI = list_phi_i_hat[i] / list_phi_i_hat_sat
+            list_PHI.append(PHI)
+        return list_PHI
 
     def calc_bubble_point(self, EoS):
         amL = self.calc_am(EoS, self.compositions)
@@ -296,11 +307,11 @@ class Fluid(ProperyContainer):
 
         PHI_list = [1] * len(self.components)
 
-        bubble_P = self.calc_bubble_P(self.compositions, list_gama_i, PHI_list)
-        list_bubble_yi = self.calc_bubble_y_i(bubble_P, self.compositions, list_gama_i, PHI_list)
+        bubble_P_old = self.calc_bubble_P(self.compositions, list_gama_i, PHI_list)
+        list_bubble_yi = self.calc_bubble_y_i(bubble_P_old, self.compositions, list_gama_i, PHI_list)
         amV = self.calc_am(EoS, list_bubble_yi)
         bmV = self.calc_bm(EoS, list_bubble_yi)
-        z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, bubble_P)
+        z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, bubble_P_old)
         Gr_gas = self.calc_Gr(EoS, z_gas)
         # list_zi_gas = self.calc_z_i_gas(EoS, self.T, bubble_P)
         # list_Gr_i_gas = self.calc_Gr_i(EoS, list_zi_gas, self.T, bubble_P)
@@ -308,6 +319,31 @@ class Fluid(ProperyContainer):
         list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
         list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
         list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
+        bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
+        list_bubble_yi_new = self.calc_bubble_y_i(bubble_P_new, self.compositions, list_gama_i, list_PHI_i)
+        amV = self.calc_am(EoS, list_bubble_yi_new)
+        bmV = self.calc_bm(EoS, list_bubble_yi_new)
+        z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, bubble_P_new)
+        Gr_gas = self.calc_Gr(EoS, z_gas)
+        list_DGri_Dni_gas1 = self.calc_DGri_Dni(amV, bmV, z_gas, list_bubble_yi_new, EoS)
+        list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
+        list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
+        list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
+        bubble_P_old = bubble_P_new
+        bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
+        while abs(bubble_P_new - bubble_P_old) > 1:
+            list_bubble_yi_new = self.calc_bubble_y_i(bubble_P_new, self.compositions, list_gama_i, list_PHI_i)
+            amV = self.calc_am(EoS, list_bubble_yi_new)
+            bmV = self.calc_bm(EoS, list_bubble_yi_new)
+            z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, bubble_P_new)
+            Gr_gas = self.calc_Gr(EoS, z_gas)
+            list_DGri_Dni_gas1 = self.calc_DGri_Dni(amV, bmV, z_gas, list_bubble_yi_new, EoS)
+            list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
+            list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
+            list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
+            bubble_P_old = bubble_P_new
+            bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
+        return bubble_P_new
         #  calc y i for each component
         #
 
