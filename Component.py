@@ -207,6 +207,14 @@ class Component:
         raise Exception("you are not allowed to change this property")
 
     @property
+    def k(self):
+        return self.__k
+
+    @k.setter
+    def k(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
     def alpha(self):
         return self.__alpha
 

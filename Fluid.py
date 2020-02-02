@@ -354,28 +354,37 @@ class Fluid(ProperyContainer):
 
     def calc_dew_point(self, EoS):
         count = len(self.components)
+        ############
+        ############
+        # initial(old)
         list_PHI_old = [1] * count
         list_gama_old = [1] * count
 
         Dew_P_old = self.calc_Dew_P()
         list_x_old = self.calc_x()
 
-        list_gama_old = self.calc_gama()
+        list_gama = self.calc_gama()
 
+        Dew_P_old = self.calc_Dew_P()
+        list_x_old = self.calc_x()
+
+        list_PHI = self.calc_PHI()
+        ##############
+        ##############
+        # new
         Dew_P = self.calc_Dew_P()
         list_x = self.calc_x()
 
+        list_gama = self.calc_gama()
+
+        Dew_P_new = self.calc_Dew_P()
+        list_x_new = self.calc_x()
         list_PHI = self.calc_PHI()
-
-        Dew_P = self.calc_Dew_P()  # old    #first product
-        list_x = self.calc_x()
-
-        list_gama = self.calc_gama()  # old
-
-        Dew_P = self.calc_Dew_P()
-        list_x = self.calc_x()
-
-        list_PHI = self.calc_PHI()
+        #########
+        #########
+        while abs(Dew_P_new - Dew_P_old) > 1:
+            Dew_P_old = Dew_P_new
+            Dew_P_new = self.calc_Dew_P()
 
         Dew_P = self.calc_Dew_P()
         list_x = self.calc_x()

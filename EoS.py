@@ -77,9 +77,6 @@ class EoS:
         Gr = term2 - term4
         return Gr
 
-    def calc_z_gas(self, fluid):
-        # like upper method with diff eq
-        pass
 
     @property
     def a_coeff(self):
