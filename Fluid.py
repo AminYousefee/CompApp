@@ -15,7 +15,7 @@ class Fluid(ProperyContainer):
             component.fluid = self
         self.__compositions = compositions
 
-    def calc_am(self, EoS):
+    def calc_am(self, EoS, compositions):
         self.calc_alpha(EoS)  # for all component calc alpha
         for component in self.components:
             component.calc_a(EoS)
@@ -25,17 +25,17 @@ class Fluid(ProperyContainer):
         for j in range(iterator_count):
             for i in range(iterator_count):
                 other = ((self.components[i].a * self.components[j].a) ** 0.5)
-                sigma += self.compositions[i] * self.compositions[j] * other
+                sigma += compositions[i] * compositions[j] * other
         self.__am = sigma
         return sigma
 
-    def calc_bm(self, EoS):
+    def calc_bm(self, EoS, compositions):
         iterator_count = len(self.components)
         for component in self.components:
             component.calc_b(EoS)
         sigma = 0
         for i in range(iterator_count):
-            sigma += self.components[i].b * self.compositions[i]
+            sigma += self.components[i].b * compositions[i]
         self.__bm = sigma
         return sigma
 
@@ -57,7 +57,7 @@ class Fluid(ProperyContainer):
         return self.__n
 
     @n.setter
-    def T(self, value):
+    def n(self, value):
         self.__n = value
 
     @property
@@ -84,11 +84,6 @@ class Fluid(ProperyContainer):
     def compositions(self, value):
         raise Exception("you are not allowed to change this property")
 
-    # every changes execute on this class via main update
-    # some properties like Re and Nu is calculated from here
-    # fluid is the class which use package property to change and update phases!!!
-    # some efficient prop from different phases must be calculate like efficient viscosity
-    # this class has a lot of setter and getter and this class is the most concentrated class in this lib
     @property
     def am(self):
         return self.__am
@@ -105,48 +100,47 @@ class Fluid(ProperyContainer):
     def bm(self, value):
         raise Exception("you are not allowed to change this property")
 
-    def calc_Gr(self, EoS):
-        z = self.__z
+    def calc_Gr(self, EoS, z):
         T = self.T
         P = self.P
         a = self.am
         b = self.bm
         Gr = EoS.calc_Gr(z, T, P, a, b)
-        self.__Gr = Gr
         return Gr
 
-    def calc_Gr_i(self, EoS):
+    def calc_Gr_i(self, EoS, z):
         for component in self.components:
             T = self.T
             P = self.P
-            component.calc_Gr(EoS, T, P)
+            component.calc_Gr(EoS, T, P, z)
 
     def calc_Psat_i(self):
         for component in self.components:
             component.calc_Psat(self.T)
 
-    def calc_z(self, EoS):
+    def calc_z_liquid(self, EoS):
         a = self.am
         b = self.bm
         T = self.T
         P = self.P
         q = EoS.calc_q(a, b, T)
         beta = EoS.calc_beta(b, P, T)
-        EoS.calc_z_liquid(q, beta)
+        z_liq = EoS.calc_z_liquid(q, beta)
+        self.__z_liq = z_liq
 
-    def calc_z_i(self, EoS):
+    def calc_z_i_liq(self, EoS):
         for component in self.components:
             T = self.T
             P = self.P
-            component.calc_z_i(T, P, EoS)
+            component.calc_z_i_liq(T, P, EoS)
 
     def calc_GbarE_i(self, EoS):
-        Gr = self.calc_Gr(EoS)
+        Gr = self.calc_Gr(EoS, self.__z_liq)
         for i in range(len(self.components)):
             component = self.components[i]
             composition = self.compositions[i]
             ni = self.__n * composition
-            DGr_Dni = component.calc_DGr_Dni(EoS, composition, self)
+            DGr_Dni = component.calc_DGr_Dni(EoS, self)
             component.calc_GbarE_i(Gr, ni, DGr_Dni)
 
     def calc_gama_i(self, EoS):
@@ -165,23 +159,36 @@ class Fluid(ProperyContainer):
         return bubble_P
 
     def calc_bubble_y_i(self, bubble_P):
+        self.__bubble_yi = []
         for i in range(self.components):
             component = self.components[i]
             composition = self.compositions[i]
             gama = component.gama_i
             Psat = component.Psat
-            component.set_yi_bubble(composition, gama, Psat, bubble_P)
+            y_i = component.set_yi_bubble(composition, gama, Psat, bubble_P)
+            self.__bubble_yi.append(y_i)
+
+    def calc_ln_phi_i_hat(self, EoS):
+        #  (Gr/ RT) + (n/ RT) * DGr_Dni
+        # change am, bm
+        bubble_yi =
+        amG = self.calc_am(EoS, )
+        # change z for mixture
+        # change Gr
+        new_Gr =
+        for component in self.components:
+            new_DGr_Dni =
 
     def calc_bubble_point(self, EoS):
-        am = self.calc_a(EoS)
-        bm = self.calc_b(EoS)
-        self.calc_z(EoS)
+        amL = self.calc_am(EoS, self.compositions)
+        bmL = self.calc_bm(EoS, self.compositions)
+        self.calc_z_liquid(EoS)
         #  calc log(p sat i) for each component
         self.calc_Psat_i()
         #  calc z for each component(liquid phase)
-        self.calc_z_i(EoS)
+        self.calc_z_i_liq(EoS)
         #  calc Gr i for each component
-        self.calc_Gr_i(EoS)
+        self.calc_Gr_i(EoS, self.__z_liq)
         #  calc Gr for fluid
         #  calc rond(Gr) / rond(ni) for each component
         #  calc Gbar i for each component from 3 up items
@@ -193,7 +200,7 @@ class Fluid(ProperyContainer):
             component.set_PHI_1()
         bubble_P = self.calc_bubble_P()
         self.calc_bubble_y_i(bubble_P)
-
+        self.calc_ln_phi_i_hat()
         #  calc y i for each component
         #
 

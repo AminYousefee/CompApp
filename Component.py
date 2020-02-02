@@ -57,7 +57,7 @@ class Component:
         ans = EoS.R * fluid.T * (Dz_Dni + term1 - term3)
         return ans
 
-    def calc_DGr_Dni(self, EoS, composition, fluid):
+    def calc_DGr_Dni(self, EoS, fluid):
         Dam_Dni = self.calc_Dam_Dni(fluid)
         Dbm_Dni = self.calc_Dbm_Dni(fluid)
         Dq_Dni = self.calc_Dq_Dni(fluid, Dam_Dni, Dbm_Dni)
@@ -81,11 +81,10 @@ class Component:
         q = EoS.calc_q(a, b, T)
         beta = EoS.calc_beta(b, P, T)
         z = EoS.calc_z_liquid(q, beta)
-        self.__z = z
+        self.__z_liq = z
         return z
 
-    def calc_Gr(self, EoS, T, P):
-        z = self.__z
+    def calc_Gr(self, EoS, T, P, z):
         a = self.__a
         b = self.__b
         Gr = EoS.calc_Gr(z, T, P, a, b)
@@ -95,11 +94,9 @@ class Component:
     def calc_a(self, EoS):
         a = EoS.a_coeff * 0.45724 * (EoS.R ** 2) * (self.Tc ** 2) / self.Pc
         self.__a = self.__alpha * a
-        self.__all_props["a"] = self.__a
 
     def calc_b(self, EoS):
         self.__b = EoS.b_coeff * EoS.R * self.Tc / self.Pc
-        self.__all_props["b"] = self.__b
 
     def calc_k(self, EoS):
         a = EoS.alpha_coeffs[0]
@@ -128,6 +125,7 @@ class Component:
         PHI = self.__PHI
         y_i = composition * gama * Psat / (PHI * bubble_P)
         self.__yi_bubble = y_i
+        return y_i
 
     def set_PHI_1(self):
         self.__PHI = 1

@@ -55,9 +55,6 @@ class EoS:
             old_z = new_z
             new_z = z_calculator(old_z)
         return new_z
-        # this method use guess and error algorithm to get z
-        # z here is a number and not a list
-        pass
 
     def calc_Gr(self, z, T, P, a, b):
         ro = P / (z * EoS.R * T)
