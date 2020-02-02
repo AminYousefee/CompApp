@@ -306,7 +306,9 @@ class Fluid(ProperyContainer):
         list_gama_i = self.calc_gama_i(EoS, self.T, list_GbarE_i)
 
         PHI_list = [1] * len(self.components)
-
+        #####################
+        #####################
+        # old(initial)
         bubble_P_old = self.calc_bubble_P(self.compositions, list_gama_i, PHI_list)
         list_bubble_yi = self.calc_bubble_y_i(bubble_P_old, self.compositions, list_gama_i, PHI_list)
         amV = self.calc_am(EoS, list_bubble_yi)
@@ -319,6 +321,9 @@ class Fluid(ProperyContainer):
         list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
         list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
         list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
+        ##########################
+        ##########################
+        # new
         bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
         list_bubble_yi_new = self.calc_bubble_y_i(bubble_P_new, self.compositions, list_gama_i, list_PHI_i)
         amV = self.calc_am(EoS, list_bubble_yi_new)
@@ -329,6 +334,8 @@ class Fluid(ProperyContainer):
         list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
         list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
         list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
+        ######################
+        ######################
         bubble_P_old = bubble_P_new
         bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
         while abs(bubble_P_new - bubble_P_old) > 1:
@@ -344,29 +351,31 @@ class Fluid(ProperyContainer):
             bubble_P_old = bubble_P_new
             bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
         return bubble_P_new
-        #  calc y i for each component
-        #
 
-    # calc Pi_sat from....(equation)
-    # calc gama_i from...
-    #
-    #
-    # after all calculations which you will write here
-    # we have list of composition for each phase and bubble point
     def calc_dew_point(self, EoS):
-        pass
+        count = len(self.components)
+        list_PHI = [1] * count
+        list_gama = [1] * count
 
+        Dew_P = self.calc_Dew_P()
+        list_x = self.calc_x()
 
-# like bubble point
-"""
-    def calc_ln_phi_i_hat(self, EoS):
-        #  (Gr/ RT) + (n/ RT) * DGr_Dni
-        # change am, bm
-        bubble_yi =
-        amG = self.calc_am(EoS, )
-        # change z for mixture
-        # change Gr
-        new_Gr =
-        for component in self.components:
-            new_DGr_Dni =
-"""
+        list_gama = self.calc_gama()
+
+        Dew_P = self.calc_Dew_P()
+        list_x = self.calc_x()
+
+        list_PHI = self.calc_PHI()
+
+        Dew_P = self.calc_Dew_P()  # old    #first product
+        list_x = self.calc_x()
+
+        list_gama = self.calc_gama()  # old
+
+        Dew_P = self.calc_Dew_P()
+        list_x = self.calc_x()
+
+        list_PHI = self.calc_PHI()
+
+        Dew_P = self.calc_Dew_P()
+        list_x = self.calc_x()
