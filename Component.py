@@ -7,54 +7,54 @@ class Component:
     def __init__(self):
         self.PHI = 1
 
-    def calc_Dam_Dni(self, fluid):
+    def calc_Dam_Dni(self, fluid, am, compositions):
         n = fluid.n
-        am = fluid.am
         ai = self.__a
         ans1 = 2 / n
         ans2 = 0
         for j in range(len(fluid.components)):
             component = fluid.components[j]
-            composition = fluid.compositions[j]
+            composition = compositions[j]
             aj = component.a
             ans2 += composition * ((ai * aj) ** 0.5) - am
         return ans1 * ans2
 
-    def calc_Dbm_Dni(self, fluid):
-        return (self.b - fluid.bm) / fluid.n
+    def calc_Dbm_Dni(self, fluid, bm):
+        return (self.b - bm) / fluid.n
 
-    def calc_Dq_Dni(self, fluid, Dam_Dni, Dbm_Dni):
-        term1 = Dam_Dni / fluid.bm
-        term2 = fluid.am * Dbm_Dni / (fluid.bm ** 2)
+    def calc_Dq_Dni(self, Dam_Dni, Dbm_Dni, am, bm):
+        term1 = Dam_Dni / bm
+        term2 = am * Dbm_Dni / (bm ** 2)
         return term1 - term2
 
-    def calc_DI_Dni(self, EoS, fluid, Dbm_Dni):
-        ro = fluid.P / (fluid.T * EoS.R * fluid.z)
-        term1 = (ro * EoS.omega) / (1 + EoS.omega * ro * fluid.bm)
-        term2 = (ro * EoS.eps) / (1 + EoS.eps * ro * fluid.bm)
+    def calc_DI_Dni(self, EoS, T, P, z, bm, Dbm_Dni):
+        ro = P / (T * EoS.R * z)
+        term1 = (ro * EoS.omega) / (1 + EoS.omega * ro * bm)
+        term2 = (ro * EoS.eps) / (1 + EoS.eps * ro * bm)
         return Dbm_Dni * (term1 - term2)
 
-    def calc_Dz_Dni(self, fluid, Dbm_Dni, EoS, Dq_Dni):
-        ro = fluid.P / (fluid.T * EoS.R * fluid.z)
-        term1 = ro * Dbm_Dni / (1 - ro * fluid.bm) ** 2
-        term2 = ro * fluid.bm * Dq_Dni / ((1 + EoS.eps * ro * fluid.bm) * (1 + EoS.omega * ro * fluid.bm))
-        term3 = ro * Dbm_Dni / ((1 + EoS.eps * ro * fluid.bm) * (1 + EoS.omega * ro * fluid.bm))
-        term4 = (ro ** 2) * fluid.bm * (EoS.eps ** 2) / (
-                ((1 + EoS.eps * ro * fluid.bm) ** 2) * (1 + EoS.omega * ro * fluid.bm))
-        term5 = (ro ** 2) * fluid.bm * EoS.omega * Dbm_Dni / (
-                (1 + EoS.eps * ro * fluid.bm) * ((1 + EoS.omega * ro * fluid.bm) ** 2))
-        term6 = fluid.q * (term3 - term4 - term5)
+    def calc_Dz_Dni(self, Dbm_Dni, EoS, Dq_Dni, am, bm, T, P, z):
+        q = EoS.calc_q(am, bm, T)
+        ro = P / (T * EoS.R * z)
+        term1 = ro * Dbm_Dni / (1 - ro * bm) ** 2
+        term2 = ro * bm * Dq_Dni / ((1 + EoS.eps * ro * bm) * (1 + EoS.omega * ro * bm))
+        term3 = ro * Dbm_Dni / ((1 + EoS.eps * ro * bm) * (1 + EoS.omega * ro * bm))
+        term4 = (ro ** 2) * bm * (EoS.eps ** 2) / (
+                ((1 + EoS.eps * ro * bm) ** 2) * (1 + EoS.omega * ro * bm))
+        term5 = (ro ** 2) * bm * EoS.omega * Dbm_Dni / (
+                (1 + EoS.eps * ro * bm) * ((1 + EoS.omega * ro * bm) ** 2))
+        term6 = q * (term3 - term4 - term5)
         term7 = term1 - term2 - term6
         return term7
 
-    def calcu_DGr_Dni(self, fluid, Dz_Dni, Dbm_Dni, EoS, Dq_Dni, DI_Dni):
-        ro = fluid.P / (fluid.T * EoS.R * fluid.z)
-        term1 = ro * Dbm_Dni * fluid.z / (1 - ro * fluid.bm)
+    def calcu_DGr_Dni(self, Dz_Dni, Dbm_Dni, EoS, Dq_Dni, DI_Dni, T, P, z, am, bm):
+        ro = P / (T * EoS.R * z)
+        term1 = ro * Dbm_Dni * z / (1 - ro * bm)
         term2 = 1 / (EoS.omega - EoS.eps)
-        I = term2 * log((1 + EoS.omega * ro * fluid.bm) / (1 + EoS.eps * ro * fluid.bm))
-        q = EoS.calc_q(fluid.am, fluid.bm, fluid.T)
-        term3 = Dz_Dni * log(1 - ro * fluid.bm - I * Dq_Dni - q * DI_Dni)
-        ans = EoS.R * fluid.T * (Dz_Dni + term1 - term3)
+        I = term2 * log((1 + EoS.omega * ro * bm) / (1 + EoS.eps * ro * bm))
+        q = EoS.calc_q(am, bm, T)
+        term3 = Dz_Dni * log(1 - ro * bm - I * Dq_Dni - q * DI_Dni)
+        ans = EoS.R * T * (Dz_Dni + term1 - term3)
         return ans
 
     def calc_DGr_Dni(self, EoS, fluid):
@@ -88,7 +88,6 @@ class Component:
         a = self.__a
         b = self.__b
         Gr = EoS.calc_Gr(z, T, P, a, b)
-        self.__Gr = Gr
         return Gr
 
     def calc_a(self, EoS):
@@ -121,14 +120,10 @@ class Component:
         self.__Psat = Psat
         return Psat
 
-    def set_yi_bubble(self, composition, gama, Psat, bubble_P):
-        PHI = self.__PHI
+    def set_yi_bubble(self, composition, gama, Psat, bubble_P, PHI):
         y_i = composition * gama * Psat / (PHI * bubble_P)
-        self.__yi_bubble = y_i
         return y_i
 
-    def set_PHI_1(self):
-        self.__PHI = 1
 
     @property
     def Antoine_coeffs(self):

@@ -45,10 +45,21 @@ class EoS:
     def calc_q(a, b, T):
         return a / (b * EoS.R * T)
 
-    def calc_z_liquid(self, q, beta):
-        old_z = 1
+    def calc_z_liquid(self, q, beta, b):
+        old_z = b
         z_calculator = lambda z: beta + (z + self.__eps * beta) * (z + self.__omega * beta) * (1 + beta - z) / (
                 q * beta)
+        new_z = z_calculator(old_z)
+        accuracy = 10 ** -7
+        while abs(new_z - old_z) > accuracy:
+            old_z = new_z
+            new_z = z_calculator(old_z)
+        return new_z
+
+    def calc_z_gas(self, q, beta):
+        old_z = 1
+        z_calculator = lambda z: 1 + beta - q * beta * (
+                    (z - beta) / ((z + self.__eps * beta) * (z + self.__omega * beta)))
         new_z = z_calculator(old_z)
         accuracy = 10 ** -7
         while abs(new_z - old_z) > accuracy:
