@@ -336,9 +336,9 @@ class Fluid(ProperyContainer):
         list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
         ######################
         ######################
-        bubble_P_old = bubble_P_new
-        bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
         while abs(bubble_P_new - bubble_P_old) > 1:
+            bubble_P_old = bubble_P_new
+            bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
             list_bubble_yi_new = self.calc_bubble_y_i(bubble_P_new, self.compositions, list_gama_i, list_PHI_i)
             amV = self.calc_am(EoS, list_bubble_yi_new)
             bmV = self.calc_bm(EoS, list_bubble_yi_new)
@@ -348,8 +348,8 @@ class Fluid(ProperyContainer):
             list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
             list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
             list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
-            bubble_P_old = bubble_P_new
-            bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
+            ########
+            ########
         return bubble_P_new
 
     def calc_dew_point(self, EoS):
