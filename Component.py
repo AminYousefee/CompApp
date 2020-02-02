@@ -101,7 +101,8 @@ class Component:
         a = EoS.alpha_coeffs[0]
         b = EoS.alpha_coeffs[1]
         c = EoS.alpha_coeffs[2]
-        return a + b * self.omega - c * (self.omega ** 2)
+        self.__k = a + b * self.omega - c * (self.omega ** 2)
+        return self.__k
 
     def calc_alpha(self, k, T):
         Tr = T / self.Tc
