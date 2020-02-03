@@ -1,7 +1,5 @@
 from math import log
 
-import ProperyContainer
-
 
 def calc_H_ig_i(cp_coeffs, T, T0):
     A = cp_coeffs[0]
@@ -13,11 +11,12 @@ def calc_H_ig_i(cp_coeffs, T, T0):
     return H_ig_i
 
 
-class Phase(ProperyContainer):
-    def __init__(self, fluid, compositions, EoS):
+class Phase:
+    def __init__(self, fluid, compositions, EoS, n):
         self.__fluid = fluid
         self.__compositions = compositions
         self.__EoS = EoS
+        self.__n = n
 
     @property
     def fluid(self):
@@ -25,6 +24,14 @@ class Phase(ProperyContainer):
 
     @fluid.setter
     def fluid(self, fluid):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def n(self):
+        return self.__n
+
+    @n.setter
+    def n(self, n):
         raise Exception("you are not allowed to change this property")
 
     @property

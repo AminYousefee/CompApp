@@ -1,9 +1,10 @@
 from math import exp
 
-import ProperyContainer
+from GasPhase import GasPhase
+from LiquidPhase import LiquidPhase
 
 
-class Fluid(ProperyContainer):
+class Fluid:
     required_property = dict()
 
     def __init__(self, n, T, P, components, compositions):
@@ -350,7 +351,7 @@ class Fluid(ProperyContainer):
             list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
             ########
             ########
-        return bubble_P_new
+        return [bubble_P_new, list_PHI_i, list_gama_i, list_bubble_yi_new]
 
     def calc_Dew_P(self, composition, PHI_list, list_gama):
         sigma = 0
@@ -375,8 +376,7 @@ class Fluid(ProperyContainer):
             list_xi.append(xi)
         return list_xi
 
-    def calc_gama(self, EoS, list_xi, Dew_P, am, bm, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq,
-                  list_GbarE_i):
+    def calc_gama(self, EoS, list_GbarE_i):
         T = self.T
         R = EoS.R
         list_gama = []
@@ -407,8 +407,7 @@ class Fluid(ProperyContainer):
         list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, Dew_P_old)
         list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, list_x_old, EoS)
         list_GbarE_i = self.calc_GbarE_i(Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq)
-        list_gama = self.calc_gama(EoS, list_x_old, Dew_P_old, amL, bmL, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq,
-                                   list_DGri_Dni_liq, list_GbarE_i)
+        list_gama = self.calc_gama(EoS, list_GbarE_i)
 
         Dew_P_old = self.calc_Dew_P(yi_list, list_PHI_old, list_gama)
         list_x_old = self.calc_x(yi_list, list_PHI_old, Dew_P_old, list_gama)
@@ -437,8 +436,7 @@ class Fluid(ProperyContainer):
         list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, Dew_P)
         list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, list_x, EoS)
         list_GbarE_i = self.calc_GbarE_i(Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq)
-        list_gama = self.calc_gama(EoS, list_x_old, Dew_P_old, amL, bmL, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq,
-                                   list_DGri_Dni_liq, list_GbarE_i)
+        list_gama = self.calc_gama(EoS, list_GbarE_i)
 
         Dew_P_new = self.calc_Dew_P(yi_list, list_PHI, list_gama)
         list_x_new = self.calc_x(yi_list, list_PHI, Dew_P, list_gama)
@@ -469,8 +467,7 @@ class Fluid(ProperyContainer):
             list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, Dew_P_new)
             list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, list_x, EoS)
             list_GbarE_i = self.calc_GbarE_i(Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq)
-            list_gama = self.calc_gama(EoS, list_x, Dew_P_new, amL, bmL, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq,
-                                       list_DGri_Dni_liq, list_GbarE_i)
+            list_gama = self.calc_gama(EoS, list_GbarE_i)
 
             Dew_P_new = self.calc_Dew_P(yi_list, list_PHI, list_gama)
             list_x = self.calc_x(yi_list, list_PHI, Dew_P_new, list_gama)
@@ -486,4 +483,152 @@ class Fluid(ProperyContainer):
             list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
             list_PHI = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
 
-        return Dew_P_new
+        return [Dew_P_new, list_PHI, list_gama, list_x]
+
+    def calc_initial_PHI_list(self, dew_P, bubble_P, bubble_PHI_list, dew_PHI_list):
+        cons = (self.P - dew_P) / (bubble_P - dew_P)
+        new_PHI_list = []
+        for i in range(len(bubble_PHI_list)):
+            PHI_bub = bubble_PHI_list[i]
+            PHI_dew = dew_PHI_list[i]
+            new_PHI = (PHI_bub - PHI_dew) * cons + PHI_dew
+            new_PHI_list.append(new_PHI)
+        return new_PHI_list
+
+    def calc_initial_gama_list(self, dew_P, bubble_P, bubble_gama_list, dew_gama_list):
+        cons = (self.P - dew_P) / (bubble_P - dew_P)
+        new_gama_list = []
+        for i in range(len(bubble_gama_list)):
+            gama_bub = bubble_gama_list[i]
+            gama_dew = dew_gama_list[i]
+            new_gama = (gama_bub - gama_dew) * cons + gama_dew
+            new_gama_list.append(new_gama)
+        return new_gama_list
+
+    def calc_ki(self, gama_list, PHI_list):
+        ki_list = []
+        for i in range(len(gama_list)):
+            component = self.components[i]
+            Psat = component.Psat
+            gama = gama_list[i]
+            PHI = PHI_list[i]
+            ki = gama * Psat / (PHI * self.P)
+            ki_list.append(ki)
+        return ki_list
+
+    def calc_F_flash(self, ki_list, V):
+        F = 0
+        for i in range(len(ki_list)):
+            zi = self.compositions[i]
+            ki = ki_list[i]
+            Fi = zi * (ki - 1) / (1 + V * (ki - 1))
+            F += Fi
+        return F
+
+    def calc_DF_DV_flash(self, ki_list, V):
+        DF_DV = 0
+        for i in range(len(ki_list)):
+            zi = self.compositions[i]
+            ki = ki_list[i]
+            Fi = zi * ((ki - 1) ** 2) / ((1 + V * (ki - 1)) ** 2)
+            DF_DV += Fi
+        return - DF_DV
+
+    def newtone_V_calc(self, ki_list, initial_V):
+        F_old = self.calc_F_flash(ki_list, initial_V)
+        DF_DV_old = self.calc_DF_DV_flash(ki_list, initial_V)
+        V_old = initial_V
+
+        V_new = V_old - (F_old / DF_DV_old)
+        F_new = self.calc_F_flash(ki_list, V_new)
+        DF_DV_new = self.calc_DF_DV_flash(ki_list, V_new)
+
+        acc = 10 ** - 4
+        while abs(V_old - V_new) > acc:
+            V_old = V_new
+            F_old = F_new
+            DF_DV_old = DF_DV_new
+            V_new = V_old - (F_old / DF_DV_old)
+            F_new = self.calc_F_flash(ki_list, V_new)
+            DF_DV_new = self.calc_DF_DV_flash(ki_list, V_new)
+        return V_new
+
+    def calc_flash_xi_yi(self, V, ki_list):
+        xi_list = []
+        yi_list = []
+        for i in range(len(ki_list)):
+            zi = self.compositions[i]
+            ki = ki_list[i]
+            xi = zi / (1 + V * (ki - 1))
+            yi = ki * xi
+            xi_list.append(xi)
+            yi_list.append(yi)
+        return xi_list, yi_list
+
+    def flash_calc(self, EoS):
+        phase_list = []
+        bubble_props = self.calc_bubble_point(EoS)
+        bubble_P = bubble_props[0]
+        bubble_PHI_list = bubble_props[1]
+        bubble_gama_list = bubble_props[2]
+
+        dew_props = self.calc_dew_point(EoS)
+        dew_P = dew_props[0]
+        dew_PHI_list = dew_props[1]
+        dew_gama_list = dew_props[2]
+
+        if self.P > bubble_P:
+            liquid_phase = LiquidPhase(self, self.compositions, EoS, self.n)
+            phase_list.append(liquid_phase)
+            # liquid phase must be created
+            # composition of liquid phase is self.composition
+        elif self.P < dew_P:
+            gas_phase = GasPhase(self, self.compositions, EoS, self.n)
+            phase_list.append(gas_phase)
+            # gas phase must be created
+            # composition = self.composition
+        else:
+            # we have liquid and gas phase
+            # here we calc V, xi, yi
+            initial_PHI_list = self.calc_initial_PHI_list(dew_P, bubble_P, bubble_PHI_list, dew_PHI_list)
+            initial_gama_list = self.calc_initial_gama_list(dew_P, bubble_P, bubble_gama_list, dew_gama_list)
+            initial_V = (bubble_P - self.P) / (bubble_P - dew_P)
+            ki_list = self.calc_ki(initial_gama_list, initial_PHI_list)
+
+            V = self.newtone_V_calc(ki_list, initial_V)
+            old_V = initial_V
+            acc = 10 ** -4
+            while abs(V - old_V) > acc:
+                xi_list, yi_list = self.calc_flash_xi_yi(V, ki_list)
+
+                amL = self.calc_am(EoS, xi_list)
+                bmL = self.calc_bm(EoS, xi_list)
+                z_liq = self.calc_z_liquid(EoS, amL, bmL, self.T, self.P)
+                list_zi_liq = self.calc_z_i_liq(EoS, self.T, self.P)
+                Gr_liq = self.calc_Gr(EoS, z_liq)
+                list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, self.P)
+                list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, xi_list, EoS)
+                list_GbarE_i = self.calc_GbarE_i(Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq)
+
+                list_gama = self.calc_gama(EoS, list_GbarE_i)
+
+                amV = self.calc_am(EoS, yi_list)
+                bmV = self.calc_bm(EoS, yi_list)
+                z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, self.P)
+                Gr_gas = self.calc_Gr(EoS, z_gas)
+                # list_zi_gas = self.calc_z_i_gas(EoS, self.T, bubble_P)
+                # list_Gr_i_gas = self.calc_Gr_i(EoS, list_zi_gas, self.T, bubble_P)
+                list_DGri_Dni_gas1 = self.calc_DGri_Dni(amV, bmV, z_gas, yi_list, EoS)
+                list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, (V * self.n), list_DGri_Dni_gas1)
+                list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, (V * self.n), amV, bmV, z_gas)
+
+                list_PHI = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
+
+                ki_list = self.calc_ki(list_gama, list_PHI)
+                old_V = V
+                V = self.newtone_V_calc(ki_list, initial_V)
+            gas_phase = GasPhase(self, yi_list, EoS, V * self.n)
+            liquid_phase = LiquidPhase(self, xi_list, EoS, (1 - V) * self.n)
+            phase_list.append(gas_phase)
+            phase_list.append(liquid_phase)
+        return phase_list
