@@ -155,3 +155,15 @@ class Phase(ProperyContainer):
         fluid = self.fluid
         S = self.calc_entropy_residual(fluid, EoS, z) + self.calc_S_ig_mixture(fluid)
         return S
+
+    def calc_G_mixture(self, fluid, z):
+        G_mixture = self.calc_H(z) - fluid.T * self.calc_mixture_entropy(z)
+        return G_mixture
+
+    def calc_U_mixture(self, fluid, z):
+        U_mixture = self.calc_H(z) - (z * EoS.R * fluid.T)
+        return U_mixture
+
+    def calc_A_mixture(self, fluid, z):
+        A_mixture = self.calc_U_mixture(fluid, z) - fluid.T * self.calc_mixture_entropy(z)
+        return A_mixture
