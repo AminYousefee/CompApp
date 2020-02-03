@@ -352,46 +352,138 @@ class Fluid(ProperyContainer):
             ########
         return bubble_P_new
 
+    def calc_Dew_P(self, composition, PHI_list, list_gama):
+        sigma = 0
+        for i in range(len(self.components)):
+            component = self.components[i]
+            Psat = component.Psat
+            yi = composition[i]
+            PHI_i = PHI_list[i]
+            gama_i = list_gama[i]
+            sigma += ((yi * PHI_i) / (gama_i * Psat))
+        return 1 / sigma
+
+    def calc_x(self, yi_list, PHI_list, dew_P, gama_list):
+        list_xi = []
+        for i in range(len(self.components)):
+            yi = yi_list[i]
+            PHI = PHI_list[i]
+            gama = gama_list[i]
+            component = self.components[i]
+            Psat = component.Psat
+            xi = (yi * PHI * dew_P) / (gama * Psat)
+            list_xi.append(xi)
+        return list_xi
+
+    def calc_gama(self, EoS, list_xi, Dew_P, am, bm, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq,
+                  list_GbarE_i):
+        T = self.T
+        R = EoS.R
+        list_gama = []
+        for i in range(len(self.components)):
+            component = self.components[i]
+            GbarE_i = list_GbarE_i[i]
+            gama = GbarE_i / (R * T)
+            list_gama.append(gama)
+        return list_gama
+
     def calc_dew_point(self, EoS):
         count = len(self.components)
+        yi_list = self.compositions
         ############
         ############
         # initial(old)
         list_PHI_old = [1] * count
         list_gama_old = [1] * count
 
-        Dew_P_old = self.calc_Dew_P()
-        list_x_old = self.calc_x()
+        Dew_P_old = self.calc_Dew_P(yi_list, list_PHI_old, list_gama_old)
+        list_x_old = self.calc_x(yi_list, list_PHI_old, Dew_P_old, list_gama_old)
 
-        list_gama = self.calc_gama()
+        amL = self.calc_am(EoS, list_x_old)
+        bmL = self.calc_bm(EoS, list_x_old)
+        z_liq = self.calc_z_liquid(EoS, amL, bmL, self.T, Dew_P_old)
+        list_zi_liq = self.calc_z_i_liq(EoS, self.T, Dew_P_old)
+        Gr_liq = self.calc_Gr(EoS, z_liq)
+        list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, Dew_P_old)
+        list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, list_x_old, EoS)
+        list_GbarE_i = self.calc_GbarE_i(Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq)
+        list_gama = self.calc_gama(EoS, list_x_old, Dew_P_old, amL, bmL, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq,
+                                   list_DGri_Dni_liq, list_GbarE_i)
 
-        Dew_P_old = self.calc_Dew_P()
-        list_x_old = self.calc_x()
+        Dew_P_old = self.calc_Dew_P(yi_list, list_PHI_old, list_gama)
+        list_x_old = self.calc_x(yi_list, list_PHI_old, Dew_P_old, list_gama)
 
-        list_PHI = self.calc_PHI()
+        amV = self.calc_am(EoS, yi_list)
+        bmV = self.calc_bm(EoS, yi_list)
+        z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, self.P)
+        Gr_gas = self.calc_Gr(EoS, z_gas)
+        # list_zi_gas = self.calc_z_i_gas(EoS, self.T, bubble_P)
+        # list_Gr_i_gas = self.calc_Gr_i(EoS, list_zi_gas, self.T, bubble_P)
+        list_DGri_Dni_gas1 = self.calc_DGri_Dni(amV, bmV, z_gas, yi_list, EoS)
+        list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
+        list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
+        list_PHI = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
         ##############
         ##############
         # new
-        Dew_P = self.calc_Dew_P()
-        list_x = self.calc_x()
+        Dew_P = self.calc_Dew_P(yi_list, list_PHI, list_gama)
+        list_x = self.calc_x(yi_list, list_PHI, Dew_P, list_gama)
 
-        list_gama = self.calc_gama()
+        amL = self.calc_am(EoS, list_x)
+        bmL = self.calc_bm(EoS, list_x)
+        z_liq = self.calc_z_liquid(EoS, amL, bmL, self.T, Dew_P)
+        list_zi_liq = self.calc_z_i_liq(EoS, self.T, Dew_P)
+        Gr_liq = self.calc_Gr(EoS, z_liq)
+        list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, Dew_P)
+        list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, list_x, EoS)
+        list_GbarE_i = self.calc_GbarE_i(Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq)
+        list_gama = self.calc_gama(EoS, list_x_old, Dew_P_old, amL, bmL, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq,
+                                   list_DGri_Dni_liq, list_GbarE_i)
 
-        Dew_P_new = self.calc_Dew_P()
-        list_x_new = self.calc_x()
-        list_PHI = self.calc_PHI()
+        Dew_P_new = self.calc_Dew_P(yi_list, list_PHI, list_gama)
+        list_x_new = self.calc_x(yi_list, list_PHI, Dew_P, list_gama)
+
+        amV = self.calc_am(EoS, yi_list)
+        bmV = self.calc_bm(EoS, yi_list)
+        z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, self.P)
+        Gr_gas = self.calc_Gr(EoS, z_gas)
+        # list_zi_gas = self.calc_z_i_gas(EoS, self.T, bubble_P)
+        # list_Gr_i_gas = self.calc_Gr_i(EoS, list_zi_gas, self.T, bubble_P)
+        list_DGri_Dni_gas1 = self.calc_DGri_Dni(amV, bmV, z_gas, yi_list, EoS)
+        list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
+        list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
+        list_PHI = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
+
         #########
         #########
         while abs(Dew_P_new - Dew_P_old) > 1:
             Dew_P_old = Dew_P_new
-            Dew_P_new = self.calc_Dew_P()
-            list_x = self.calc_x()
+            Dew_P_new = self.calc_Dew_P(yi_list, list_PHI, list_gama)
+            list_x = self.calc_x(yi_list, list_PHI, Dew_P_new, list_gama)
 
-            list_gama = self.calc_gama()
+            amL = self.calc_am(EoS, list_x)
+            bmL = self.calc_bm(EoS, list_x)
+            z_liq = self.calc_z_liquid(EoS, amL, bmL, self.T, Dew_P_new)
+            list_zi_liq = self.calc_z_i_liq(EoS, self.T, Dew_P_new)
+            Gr_liq = self.calc_Gr(EoS, z_liq)
+            list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, Dew_P_new)
+            list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, list_x, EoS)
+            list_GbarE_i = self.calc_GbarE_i(Gr_liq, list_Gr_i_liq, list_DGri_Dni_liq)
+            list_gama = self.calc_gama(EoS, list_x, Dew_P_new, amL, bmL, z_liq, list_zi_liq, Gr_liq, list_Gr_i_liq,
+                                       list_DGri_Dni_liq, list_GbarE_i)
 
-            Dew_P_new = self.calc_Dew_P()
-            list_x = self.calc_x()
+            Dew_P_new = self.calc_Dew_P(yi_list, list_PHI, list_gama)
+            list_x = self.calc_x(yi_list, list_PHI, Dew_P_new, list_gama)
 
-            list_PHI = self.calc_PHI()
+            amV = self.calc_am(EoS, yi_list)
+            bmV = self.calc_bm(EoS, yi_list)
+            z_gas = self.calc_z_gas(EoS, amV, bmV, self.T, self.P)
+            Gr_gas = self.calc_Gr(EoS, z_gas)
+            # list_zi_gas = self.calc_z_i_gas(EoS, self.T, bubble_P)
+            # list_Gr_i_gas = self.calc_Gr_i(EoS, list_zi_gas, self.T, bubble_P)
+            list_DGri_Dni_gas1 = self.calc_DGri_Dni(amV, bmV, z_gas, yi_list, EoS)
+            list_phi_i_hat = self.calc_phi_i_hat(Gr_gas, self.T, EoS, self.n, list_DGri_Dni_gas1)
+            list_phi_i_hat_sat = self.calc_ln_phi_i_hat_sat(Gr_gas, self.T, EoS, self.n, amV, bmV, z_gas)
+            list_PHI = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
 
-        return
+        return Dew_P_new
