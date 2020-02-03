@@ -103,7 +103,6 @@ class Phase(ProperyContainer):
     def calc_H(self, z):
         EoS = self.__EoS
         fluid = self.fluid
-
         Hr = self.calc_Hr(fluid, EoS, z)
         H_ig = self.calc_H_ig(fluid)
         return H_ig + Hr

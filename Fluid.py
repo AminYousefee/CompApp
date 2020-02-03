@@ -385,6 +385,13 @@ class Fluid(ProperyContainer):
         while abs(Dew_P_new - Dew_P_old) > 1:
             Dew_P_old = Dew_P_new
             Dew_P_new = self.calc_Dew_P()
+            list_x = self.calc_x()
 
-        Dew_P = self.calc_Dew_P()
-        list_x = self.calc_x()
+            list_gama = self.calc_gama()
+
+            Dew_P_new = self.calc_Dew_P()
+            list_x = self.calc_x()
+
+            list_PHI = self.calc_PHI()
+
+        return
