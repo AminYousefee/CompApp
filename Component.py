@@ -57,31 +57,12 @@ class Component:
         ans = EoS.R * T * (Dz_Dni + term1 - term3)
         return ans
 
-    def calc_DGr_Dni(self, EoS, fluid):
-        Dam_Dni = self.calc_Dam_Dni(fluid)
-        Dbm_Dni = self.calc_Dbm_Dni(fluid)
-        Dq_Dni = self.calc_Dq_Dni(fluid, Dam_Dni, Dbm_Dni)
-        DI_Dni = self.calc_DI_Dni(EoS, fluid, Dbm_Dni)
-        Dz_Dni = self.calc_Dz_Dni(fluid, Dbm_Dni, EoS, Dq_Dni)
-        DGr_Dni = self.calcu_DGr_Dni(fluid, Dz_Dni, Dbm_Dni, EoS, Dq_Dni, DI_Dni)
-        return DGr_Dni
-
-    def calc_GbarE_i(self, Gr, ni, DGr_Dni):
-        GbarE = Gr + ni * DGr_Dni - self.__Gr
-        self.__GbarE = GbarE
-        return GbarE
-
-    def calc_gama_i(self, T, EoS):
-        self.__gama_i = self.__GbarE / (EoS.R * T)
-        return self.__gama_i
-
     def calc_z_i(self, T, P, EoS):
         a = self.__a
         b = self.__b
         q = EoS.calc_q(a, b, T)
         beta = EoS.calc_beta(b, P, T)
         z = EoS.calc_z_liquid(q, beta)
-        self.__z_liq = z
         return z
 
     def calc_Gr(self, EoS, T, P, z):
@@ -142,59 +123,11 @@ class Component:
         raise Exception("you are not allowed to change this property")
 
     @property
-    def yi_bubble(self):
-        return self.__yi_bubble
-
-    @yi_bubble.setter
-    def yi_bubble(self, value):
-        raise Exception("you are not allowed to change this property")
-
-    @property
-    def PHI(self):
-        return self.__PHI
-
-    @PHI.setter
-    def PHI(self, value):
-        raise Exception("you are not allowed to change this property")
-
-    @property
     def Psat(self):
         return self.__Psat
 
     @Psat.setter
     def Psat(self, value):
-        raise Exception("you are not allowed to change this property")
-
-    @property
-    def gama_i(self):
-        return self.__gama_i
-
-    @gama_i.setter
-    def gama_i(self, value):
-        raise Exception("you are not allowed to change this property")
-
-    @property
-    def GbarE(self):
-        return self.__GbarE
-
-    @GbarE.setter
-    def GbarE(self, value):
-        raise Exception("you are not allowed to change this property")
-
-    @property
-    def Gr(self):
-        return self.__Gr
-
-    @Gr.setter
-    def Gr(self, value):
-        raise Exception("you are not allowed to change this property")
-
-    @property
-    def z(self):
-        return self.__z
-
-    @z.setter
-    def z(self, value):
         raise Exception("you are not allowed to change this property")
 
     @property

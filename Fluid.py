@@ -288,7 +288,6 @@ class Fluid:
         list_Dz_Dni = self.calc_Dz_Dni(list_Dbm_Dni, EoS, list_Dq_Dni, a, b, T, P, z)
         list_DGri_Dni = []
         for i in range(len(self.components)):
-            Dam = list_Dam_Dni[i]
             Dbm = list_Dbm_Dni[i]
             Dq = list_Dq_Dni[i]
             DI = list_DI_Dni[i]
@@ -426,7 +425,7 @@ class Fluid:
             list_gama.append(gama)
         return list_gama
 
-    def calc_dew_point(self, EoS):
+    def calc_dew_point(self, EoS, bubble_dew_pressure_acc):
         count = len(self.components)
         yi_list = self.compositions
         ############
@@ -493,7 +492,7 @@ class Fluid:
 
         #########
         #########
-        while abs(Dew_P_new - Dew_P_old) > 1:
+        while abs(Dew_P_new - Dew_P_old) > bubble_dew_pressure_acc:
             Dew_P_old = Dew_P_new
             Dew_P_new = self.calc_Dew_P(yi_list, list_PHI, list_gama)
             list_x = self.calc_x(yi_list, list_PHI, Dew_P_new, list_gama)
@@ -611,7 +610,7 @@ class Fluid:
         bubble_PHI_list = bubble_props[1]
         bubble_gama_list = bubble_props[2]
 
-        dew_props = self.calc_dew_point(EoS)
+        dew_props = self.calc_dew_point(EoS, bubble_dew_pressure_acc)
         dew_P = dew_props[0]
         dew_PHI_list = dew_props[1]
         dew_gama_list = dew_props[2]

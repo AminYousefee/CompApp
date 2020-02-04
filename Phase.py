@@ -1,7 +1,6 @@
 import math
 from math import log
 
-import ProperyContainer
 from EoS import EoS
 
 
@@ -11,15 +10,16 @@ def calc_H_ig_i(cp_coeffs, T, T0):
     C = cp_coeffs[2]
     D = cp_coeffs[3]
     H_ig_i = A * (T - T0) + (B / 2) * (T ** 2 - T0 ** 2) + (C / 3) * (T ** 3 - T0 ** 3) - (D / 1) * (
-            1 / (T) - (1 / (T0)))
+            1 / T - (1 / T0))
     return H_ig_i
 
 
-class Phase(ProperyContainer):
-    def __init__(self, fluid, compositions, EoS):
+class Phase:
+    def __init__(self, fluid, compositions, EoS, n):
         self.__fluid = fluid
         self.__compositions = compositions
         self.__EoS = EoS
+        self.__n = n
 
     @property
     def fluid(self):
@@ -27,6 +27,14 @@ class Phase(ProperyContainer):
 
     @fluid.setter
     def fluid(self, fluid):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def n(self):
+        return self.__n
+
+    @n.setter
+    def n(self, n):
         raise Exception("you are not allowed to change this property")
 
     @property
@@ -49,9 +57,9 @@ class Phase(ProperyContainer):
         P = fluid.P
         T = fluid.T
         ro = P / (T * EoS.R * z)
-        term1 = 1 / (EoS.omega - EoS.eps)
-        term2 = (EoS.omega * bm * ro + 1) / (1 + EoS.eps * ro * bm)
-        term3 = log(term2,math.e)
+        term1 = 1 / (EoS.sigma - EoS.eps)
+        term2 = (EoS.sigma * bm * ro + 1) / (1 + EoS.eps * ro * bm)
+        term3 = log(term2, math.e)
         return term1 * term3
 
     def calc_Dq_DT(self, am, bm, T, EoS, Dam_DT):
@@ -125,9 +133,9 @@ class Phase(ProperyContainer):
         B = cp_coeffs[1]
         C = cp_coeffs[2]
         D = cp_coeffs[3]
-        cp_intergral_for_s = A * log(T / T0, math.e) + B * (T - T0) + (C / 2) * (T ** 2 - T0 ** 2) - (D / 2) * (
+        cp_integral_for_s = A * log(T / T0, math.e) + B * (T - T0) + (C / 2) * (T ** 2 - T0 ** 2) - (D / 2) * (
                 T ** -2 - T0 ** -2)
-        return cp_intergral_for_s
+        return cp_integral_for_s
 
     def calc_p_integral_for_s(self, P, P0):
         P_integral_for_s = EoS.R * (log(P / P0), math.e)
@@ -168,35 +176,39 @@ class Phase(ProperyContainer):
         A_mixture = self.calc_U_mixture(fluid, z) - fluid.T * self.calc_mixture_entropy(z)
         return A_mixture
 
-    def calc_A_for_EOS(self,fluid,EoS):
-        am=fluid.calc_am(EoS,self.compositions)
-        P=fluid.P
-        T=fluid.T
-        A=(am*P)/((EoS.R**2)*T**2)
+    def calc_A_for_EOS(self, fluid, EoS):
+        am = fluid.calc_am(EoS, self.compositions)
+        P = fluid.P
+        T = fluid.T
+        A = (am * P) / ((EoS.R ** 2) * T ** 2)
         return A
-    def calc_B_for_EOS(self,fluid,EoS):
-        bm=fluid.calc_bm(EoS,self.compositions)
+
+    def calc_B_for_EOS(self, fluid, EoS):
+        bm = fluid.calc_bm(EoS, self.compositions)
         P = fluid.P
         T = fluid.T
-        B=(bm*P)/(EoS.R*T)
+        B = (bm * P) / (EoS.R * T)
         return B
-    def calc_DB_DT(self,fluid,EoS):
-        bm=fluid.calc_bm(EoS,self.compositions)
+
+    def calc_DB_DT(self, fluid, EoS):
+        bm = fluid.calc_bm(EoS, self.compositions)
         P = fluid.P
         T = fluid.T
-        DB_DT=-(bm*P)/(EoS.R*T**2)
+        DB_DT = -(bm * P) / (EoS.R * T ** 2)
         return DB_DT
-    def calc_DA_DT(self,fluid,EoS):
-        P=fluid.P
-        T=fluid.T
-        R=EoS.R
-        am=fluid.calc_am(EoS,self.compositions)
-        Dam_DT=self.calc_Dam_DT(fluid,self.compositions)
-        term1=P*R**2*T**2*Dam_DT
-        term2=2*R**2*T*P*am
-        term3=R**4*T**4
-        DA_DT=(term1-term2)/term3
+
+    def calc_DA_DT(self, fluid, EoS):
+        P = fluid.P
+        T = fluid.T
+        R = EoS.R
+        am = fluid.calc_am(EoS, self.compositions)
+        Dam_DT = self.calc_Dam_DT(fluid, self.compositions)
+        term1 = P * R ** 2 * T ** 2 * Dam_DT
+        term2 = 2 * R ** 2 * T * P * am
+        term3 = R ** 4 * T ** 4
+        DA_DT = (term1 - term2) / term3
         return DA_DT
+
     def calc_D2am_DT2(self, fluid, compositions):
         T = fluid.T
         components = fluid.components
@@ -218,62 +230,66 @@ class Phase(ProperyContainer):
                 Tcj = components[j].Tc
                 term2 = (-ki / (2 * ((T * Tci) ** 0.5)))
                 term3 = (-kj / (2 * ((T * Tcj) ** 0.5)))
-                term4=(0.5*ki / (2 * ((T**1.5) * (Tci ** 0.5))))
+                term4 = (0.5 * ki / (2 * ((T ** 1.5) * (Tci ** 0.5))))
                 term5 = (0.5 * kj / (2 * ((T ** 1.5) * (Tcj ** 0.5))))
-                sigmai += term1 * (alphaj * term4 + alphai * term5+2*(term2*term3))
+                sigmai += term1 * (alphaj * term4 + alphai * term5 + 2 * (term2 * term3))
             sigmaj += sigmai
         return sigmaj
-    def calc_D2q_DT2(self,fluid,EoS):
-        bm=fluid.calc_bm(EoS,self.compositions)
-        am=fluid.calc_am(EoS,self.compositions)
-        T=fluid.T
-        R=EoS.R
-        term1=(bm*R*T)
-        term2=(bm*R*T**2)
-        term3=self.calc_D2am_DT2(fluid,self.compositions)
-        term4=bm*R*self.calc_Dam_DT(fluid,self.compositions)
-        term5=self.calc_Dam_DT(fluid,self.compositions)
-        term6=2*bm*R*T*am
-        D2q_DT2=((term3*term1)-term4)/(term1**2)-((term5*term2)-term6)/(term2**2)
+
+    def calc_D2q_DT2(self, fluid, EoS):
+        bm = fluid.calc_bm(EoS, self.compositions)
+        am = fluid.calc_am(EoS, self.compositions)
+        T = fluid.T
+        R = EoS.R
+        term1 = (bm * R * T)
+        term2 = (bm * R * T ** 2)
+        term3 = self.calc_D2am_DT2(fluid, self.compositions)
+        term4 = bm * R * self.calc_Dam_DT(fluid, self.compositions)
+        term5 = self.calc_Dam_DT(fluid, self.compositions)
+        term6 = 2 * bm * R * T * am
+        D2q_DT2 = ((term3 * term1) - term4) / (term1 ** 2) - ((term5 * term2) - term6) / (term2 ** 2)
         return D2q_DT2
-    def calc_DZ_DT(self,fluid,EoS,z):
-        A=self.calc_A_for_EOS(fluid,EoS)
-        B=self.calc_B_for_EOS(fluid,EoS)
-        DB_DT=self.calc_DB_DT(fluid,EoS)
-        DA_DT=self.calc_DA_DT(fluid,EoS)
-        term1=(A*DB_DT+B*DA_DT-2*B*DB_DT-3*(B**2)*DB_DT)
-        term2=(-DB_DT)*z**2
-        term3=z*(DA_DT-2*DB_DT-6*B*DB_DT)
-        term4=3*z**2-(1-B)*2*z+(A-2*B-3*B**2)
-        DZ_DT=(term1+term2-term3)/term4
+
+    def calc_DZ_DT(self, fluid, EoS, z):
+        A = self.calc_A_for_EOS(fluid, EoS)
+        B = self.calc_B_for_EOS(fluid, EoS)
+        DB_DT = self.calc_DB_DT(fluid, EoS)
+        DA_DT = self.calc_DA_DT(fluid, EoS)
+        term1 = (A * DB_DT + B * DA_DT - 2 * B * DB_DT - 3 * (B ** 2) * DB_DT)
+        term2 = (-DB_DT) * z ** 2
+        term3 = z * (DA_DT - 2 * DB_DT - 6 * B * DB_DT)
+        term4 = 3 * z ** 2 - (1 - B) * 2 * z + (A - 2 * B - 3 * B ** 2)
+        DZ_DT = (term1 + term2 - term3) / term4
         return DZ_DT
-    def calc_DI_DT(self,EoS,z,fluid):
-        omega=EoS.omega
-        eps=EoS.eps
-        B=self.calc_B_for_EOS(fluid,EoS)
-        DZ_DT=self.calc_DZ_DT(fluid,EoS,z)
-        DB_DT=self.calc_DB_DT(fluid,EoS)
-        term1=(omega-eps)
-        term2=(z+eps*B)
-        term3=(z+omega*B)
-        term4=(DZ_DT+omega*DB_DT)
-        term5=(DZ_DT+eps*DB_DT)
-        DI_DT=(1/term1)*((term4/term3)-(term5/term2))
+
+    def calc_DI_DT(self, EoS, z, fluid):
+        sigma = EoS.sigma
+        eps = EoS.eps
+        B = self.calc_B_for_EOS(fluid, EoS)
+        DZ_DT = self.calc_DZ_DT(fluid, EoS, z)
+        DB_DT = self.calc_DB_DT(fluid, EoS)
+        term1 = (sigma - eps)
+        term2 = (z + eps * B)
+        term3 = (z + sigma * B)
+        term4 = (DZ_DT + sigma * DB_DT)
+        term5 = (DZ_DT + eps * DB_DT)
+        DI_DT = (1 / term1) * ((term4 / term3) - (term5 / term2))
         return DI_DT
-    def calc_CP_R(self,z):
+
+    def calc_CP_R(self, z):
         EoS = self.__EoS
         fluid = self.fluid
-        T=fluid.T
-        R=EoS.R
-        bm=fluid.calc_bm(EoS,self.compositions)
-        am=fluid.calc_am(EoS,self.compositions)
-        Dam_DT=self.calc_Dam_DT(fluid,self.compositions)
-        I=self.calc_I(EoS,z,bm,fluid)
-        Dq_DT=self.calc_Dq_DT(am,bm,T,EoS,Dam_DT)
-        DZ_DT=self.calc_DZ_DT(fluid,EoS,z)
-        DI_DT=self.calc_DI_DT(EoS,z,fluid)
-        D2q_DT2=self.calc_D2q_DT2(fluid,EoS)
-        term1=z-1+T*I*Dq_DT
-        term2=DZ_DT+I*Dq_DT+T*I*D2q_DT2+T*DI_DT*Dq_DT
-        CP_R=R*term1+R*T*term2
+        T = fluid.T
+        R = EoS.R
+        bm = fluid.calc_bm(EoS, self.compositions)
+        am = fluid.calc_am(EoS, self.compositions)
+        Dam_DT = self.calc_Dam_DT(fluid, self.compositions)
+        I = self.calc_I(EoS, z, bm, fluid)
+        Dq_DT = self.calc_Dq_DT(am, bm, T, EoS, Dam_DT)
+        DZ_DT = self.calc_DZ_DT(fluid, EoS, z)
+        DI_DT = self.calc_DI_DT(EoS, z, fluid)
+        D2q_DT2 = self.calc_D2q_DT2(fluid, EoS)
+        term1 = z - 1 + T * I * Dq_DT
+        term2 = DZ_DT + I * Dq_DT + T * I * D2q_DT2 + T * DI_DT * Dq_DT
+        CP_R = R * term1 + R * T * term2
         return CP_R
