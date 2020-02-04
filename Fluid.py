@@ -6,18 +6,43 @@ from LiquidPhase import LiquidPhase
 
 class Fluid:
 
-    def __init__(self, n, T, P, components, compositions, EoS):
-        if len(components) != len(compositions):
-            raise Exception("for each component we need a composition")
-        self.__n = n
-        self.__T = T
-        self.__P = P
-        self.__components = components
-        self.__EoS = EoS
-        self.__compositions = compositions
+    def __init__(self, n, T, P, components, compositions, EoS, container):
         self.__phase_list = []
-        self.__bubble_dew_pressure_acc = 1
-        self.update_all(self.__bubble_dew_pressure_acc)
+        if len(components) == 1:
+            self.calc_Psat_i(self.T)
+            self.calc_alpha(EoS)
+            component = components[0]
+            Psat = component.Psat
+            if P > Psat:
+                # liquid
+                liquid = LiquidPhase(self, [1], EoS, n)
+                self.__phase_list.append(liquid)
+            elif P == Psat:
+                total_v = container.V
+                z_gas = self.calc_z_gas(EoS, component.a, component.b, T, P)
+                z_liq = self.calc_z_liquid(EoS, component.a, component.b, T, P)
+                v_gas = (z_gas * EoS.R * T) / P
+                v_liq = (z_liq * EoS.R * T) / P
+                V = (total_v - n * v_liq) / (v_gas - v_liq)
+                L = n - V
+                liquid = LiquidPhase(self, [1], EoS, L)
+                gas = GasPhase(self, [1], EoS, V)
+                self.__phase_list.append(gas)
+                self.__phase_list.append(liquid)
+            else:
+                gas = GasPhase(self, [1], EoS, n)
+                # gas
+        else:
+            if len(components) != len(compositions):
+                raise Exception("for each component we need a composition")
+            self.__n = n
+            self.__T = T
+            self.__P = P
+            self.__components = components
+            self.__EoS = EoS
+            self.__compositions = compositions
+            self.__bubble_dew_pressure_acc = 1
+            self.update_all(self.__bubble_dew_pressure_acc)
 
     def update_all(self, bubble_dew_pressure_acc):
         self.__phase_list = self.flash_calc(self.__EoS, bubble_dew_pressure_acc)
