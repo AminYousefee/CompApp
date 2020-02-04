@@ -4,14 +4,6 @@ from Component import Component
 
 
 class PureComponent(Component):
-    all_pure_components = dict()  # component_name: obj of component
-
-    @staticmethod
-    def load_components():
-        with open("components\\components.dat", "rb") as f:
-            a = pickle.load(f)
-            PureComponent.all_pure_components = a
-            return a
 
     def __init__(self, initial_prop_dict):
         super().__init__()
@@ -37,7 +29,6 @@ class PureComponent(Component):
                     self.__Cp_coeff = initial_prop_dict["Cp coefficients"]
                 if prop_name == "Antoine coeff":
                     self.__Antoine_coeffs = initial_prop_dict["Antoine coeffs"]
-        PureComponent.all_pure_components[self.__name] = self
         self.__all_props = initial_prop_dict.copy()  # this line must be deleted after saving pure components
 
     @staticmethod

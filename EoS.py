@@ -58,7 +58,7 @@ class EoS:
         z_calculator = lambda z: beta + (z + self.__eps * beta) * (z + self.__sigma * beta) * (1 + beta - z) / (
                 q * beta)
         new_z = z_calculator(old_z)
-        accuracy = 10 ** -7
+        accuracy = 10 ** -4
         while abs(new_z - old_z) > accuracy:
             old_z = new_z
             new_z = z_calculator(old_z)

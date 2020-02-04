@@ -60,7 +60,7 @@ acetone = {
     "Tnb": 329.4,
     "MW": 58.08,
     "viscosity25": 0,
-    "Cp coefficients": [EoS.R * 3.025, EoS.R * 53.722 * 10 ** -3, EoS.R * (-16.791 * 10 ** -6), EoS.R * 0],
+    "Cp coefficients": [EoS.R * 6.301, EoS.R * 260 * 10 ** -3, EoS.R * (-16.791 * 10 ** -6), EoS.R * 0],
     "Antoine coeff": [14.3145, 2756.22, 228.06]
 }
 

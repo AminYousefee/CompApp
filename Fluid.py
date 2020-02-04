@@ -13,18 +13,16 @@ class Fluid:
         self.__T = T
         self.__P = P
         self.__components = components
-        for component in components:
-            component.fluid = self
         self.__EoS = EoS
         self.__compositions = compositions
         self.__phase_list = []
-        self.update_all()
+        self.__bubble_dew_pressure_acc = 1
+        self.update_all(self.__bubble_dew_pressure_acc)
 
-    def update_all(self):
-        self.__phase_list = self.flash_calc(self.__EoS)
+    def update_all(self, bubble_dew_pressure_acc):
+        self.__phase_list = self.flash_calc(self.__EoS, bubble_dew_pressure_acc)
 
-    def update(self, new_condition):
-        update_count = len(new_condition)
+    def update(self, new_condition, bubble_dew_pressure_acc):
         for prop in new_condition:
             if prop == "T":
                 self.__T = new_condition["T"]
@@ -34,7 +32,7 @@ class Fluid:
                 if len(self.compositions) != len(new_condition["composition"]):
                     raise Exception("number of compositions is not match with component number")
                 self.__compositions = new_condition["composition"]
-            self.update_all()
+            self.update_all(self.__bubble_dew_pressure_acc)
 
     def calc_am(self, EoS, compositions):
         self.calc_alpha(EoS)  # for all component calc alpha
@@ -70,6 +68,14 @@ class Fluid:
     @T.setter
     def T(self, value):
         self.__T = value
+
+    @property
+    def phase_list(self):
+        return self.__phase_list
+
+    @phase_list.setter
+    def phase_list(self, value):
+        self.__phase_list = value
 
     @property
     def EoS(self):
@@ -326,13 +332,12 @@ class Fluid:
             list_PHI.append(PHI)
         return list_PHI
 
-    def calc_bubble_point(self, EoS):
+    def calc_bubble_point(self, EoS, acc):
         amL = self.calc_am(EoS, self.compositions)
         bmL = self.calc_bm(EoS, self.compositions)
         z_liq = self.calc_z_liquid(EoS, amL, bmL, self.T, self.P)
         self.calc_Psat_i(self.T)
         list_zi_liq = self.calc_z_i_liq(EoS, self.T, self.P)
-
         Gr_liq = self.calc_Gr(EoS, z_liq)
         list_Gr_i_liq = self.calc_Gr_i(EoS, list_zi_liq, self.T, self.P)
         list_DGri_Dni_liq = self.calc_DGri_Dni(amL, bmL, z_liq, self.compositions, EoS)
@@ -371,7 +376,7 @@ class Fluid:
         list_PHI_i = self.calc_PHI(list_phi_i_hat, list_phi_i_hat_sat)
         ######################
         ######################
-        while abs(bubble_P_new - bubble_P_old) > 1:
+        while abs(bubble_P_new - bubble_P_old) > acc:
             bubble_P_old = bubble_P_new
             bubble_P_new = self.calc_bubble_P(self.compositions, list_gama_i, list_PHI_i)
             list_bubble_yi_new = self.calc_bubble_y_i(bubble_P_new, self.compositions, list_gama_i, list_PHI_i)
@@ -444,7 +449,7 @@ class Fluid:
         list_gama = self.calc_gama(EoS, list_GbarE_i)
 
         Dew_P_old = self.calc_Dew_P(yi_list, list_PHI_old, list_gama)
-        list_x_old = self.calc_x(yi_list, list_PHI_old, Dew_P_old, list_gama)
+        # list_x_old = self.calc_x(yi_list, list_PHI_old, Dew_P_old, list_gama)
 
         amV = self.calc_am(EoS, yi_list)
         bmV = self.calc_bm(EoS, yi_list)
@@ -599,9 +604,9 @@ class Fluid:
             yi_list.append(yi)
         return xi_list, yi_list
 
-    def flash_calc(self, EoS):
-        phase_list = []
-        bubble_props = self.calc_bubble_point(EoS)
+    def flash_calc(self, EoS, bubble_dew_pressure_acc):
+        phase_list = self.phase_list
+        bubble_props = self.calc_bubble_point(EoS, bubble_dew_pressure_acc)
         bubble_P = bubble_props[0]
         bubble_PHI_list = bubble_props[1]
         bubble_gama_list = bubble_props[2]
@@ -613,11 +618,13 @@ class Fluid:
 
         if self.P > bubble_P:
             liquid_phase = LiquidPhase(self, self.compositions, EoS, self.n)
+            self.__phase_list.clear()
             phase_list.append(liquid_phase)
             # liquid phase must be created
             # composition of liquid phase is self.composition
         elif self.P < dew_P:
             gas_phase = GasPhase(self, self.compositions, EoS, self.n)
+            self.__phase_list.clear()
             phase_list.append(gas_phase)
             # gas phase must be created
             # composition = self.composition
@@ -631,9 +638,9 @@ class Fluid:
 
             V = self.newtone_V_calc(ki_list, initial_V)
             old_V = initial_V
+            xi_list, yi_list = self.calc_flash_xi_yi(V, ki_list)
             acc = 10 ** -4
             while abs(V - old_V) > acc:
-                xi_list, yi_list = self.calc_flash_xi_yi(V, ki_list)
 
                 amL = self.calc_am(EoS, xi_list)
                 bmL = self.calc_bm(EoS, xi_list)
@@ -661,6 +668,7 @@ class Fluid:
                 ki_list = self.calc_ki(list_gama, list_PHI)
                 old_V = V
                 V = self.newtone_V_calc(ki_list, initial_V)
+                xi_list, yi_list = self.calc_flash_xi_yi(V, ki_list)
             gas_phase = GasPhase(self, yi_list, EoS, V * self.n)
             liquid_phase = LiquidPhase(self, xi_list, EoS, (1 - V) * self.n)
             phase_list.append(gas_phase)

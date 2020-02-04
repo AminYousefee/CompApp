@@ -110,7 +110,6 @@ class Component:
         b = k * a
         c = 1 + b
         self.__alpha = c ** 2
-        self.__all_props["alpha"] = self.__alpha
         return self.__alpha
 
     def calc_Psat(self, T):
