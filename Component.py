@@ -29,7 +29,7 @@ class Component:
 
     def calc_DI_Dni(self, EoS, T, P, z, bm, Dbm_Dni):
         ro = P / (T * EoS.R * z)
-        term1 = (ro * EoS.omega) / (1 + EoS.omega * ro * bm)
+        term1 = (ro * EoS.sigma) / (1 + EoS.sigma * ro * bm)
         term2 = (ro * EoS.eps) / (1 + EoS.eps * ro * bm)
         return Dbm_Dni * (term1 - term2)
 
@@ -37,12 +37,12 @@ class Component:
         q = EoS.calc_q(am, bm, T)
         ro = P / (T * EoS.R * z)
         term1 = ro * Dbm_Dni / (1 - ro * bm) ** 2
-        term2 = ro * bm * Dq_Dni / ((1 + EoS.eps * ro * bm) * (1 + EoS.omega * ro * bm))
-        term3 = ro * Dbm_Dni / ((1 + EoS.eps * ro * bm) * (1 + EoS.omega * ro * bm))
+        term2 = ro * bm * Dq_Dni / ((1 + EoS.eps * ro * bm) * (1 + EoS.sigma * ro * bm))
+        term3 = ro * Dbm_Dni / ((1 + EoS.eps * ro * bm) * (1 + EoS.sigma * ro * bm))
         term4 = (ro ** 2) * bm * (EoS.eps ** 2) / (
-                ((1 + EoS.eps * ro * bm) ** 2) * (1 + EoS.omega * ro * bm))
-        term5 = (ro ** 2) * bm * EoS.omega * Dbm_Dni / (
-                (1 + EoS.eps * ro * bm) * ((1 + EoS.omega * ro * bm) ** 2))
+                ((1 + EoS.eps * ro * bm) ** 2) * (1 + EoS.sigma * ro * bm))
+        term5 = (ro ** 2) * bm * EoS.sigma * Dbm_Dni / (
+                (1 + EoS.eps * ro * bm) * ((1 + EoS.sigma * ro * bm) ** 2))
         term6 = q * (term3 - term4 - term5)
         term7 = term1 - term2 - term6
         return term7
@@ -50,8 +50,8 @@ class Component:
     def calcu_DGr_Dni(self, Dz_Dni, Dbm_Dni, EoS, Dq_Dni, DI_Dni, T, P, z, am, bm):
         ro = P / (T * EoS.R * z)
         term1 = ro * Dbm_Dni * z / (1 - ro * bm)
-        term2 = 1 / (EoS.omega - EoS.eps)
-        I = term2 * log((1 + EoS.omega * ro * bm) / (1 + EoS.eps * ro * bm))
+        term2 = 1 / (EoS.sigma - EoS.eps)
+        I = term2 * log((1 + EoS.sigma * ro * bm) / (1 + EoS.eps * ro * bm))
         q = EoS.calc_q(am, bm, T)
         term3 = Dz_Dni * log(1 - ro * bm - I * Dq_Dni - q * DI_Dni)
         ans = EoS.R * T * (Dz_Dni + term1 - term3)

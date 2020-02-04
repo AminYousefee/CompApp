@@ -54,8 +54,8 @@ class Phase:
         P = fluid.P
         T = fluid.T
         ro = P / (T * EoS.R * z)
-        term1 = 1 / (EoS.omega - EoS.eps)
-        term2 = (EoS.omega * bm * ro + 1) / (1 + EoS.eps * ro * bm)
+        term1 = 1 / (EoS.sigma - EoS.eps)
+        term2 = (EoS.sigma * bm * ro + 1) / (1 + EoS.eps * ro * bm)
         term3 = log(term2)
         return term1 * term3
 
