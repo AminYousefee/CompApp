@@ -16,42 +16,99 @@ def calc_H_ig_i(cp_coeffs, T, T0):
 
 class Phase:
     def __init__(self, fluid, compositions, EoS, n):
+        self.__G = 0
+        self.__density = 0
+        self.__viscosity = 0
+        self.__conductivity = 0
+        self.__Cp = 0
+        self.__S = 0
+        self.__Dam_DT = 0
+        self.__Dq_DT = 0
+        self.__V = 0
+        self.__U = 0
+        self.__A = 0
+        self.__H = 0
+        self.__z = 0
+        self.__am = 0
+        self.__bm = 0
         self.__fluid = fluid
         self.__compositions = compositions
         self.__EoS = EoS
         self.__n = n
 
-    @property
-    def fluid(self):
-        return self.__fluid
+    def calc_z(self):
+        pass
 
-    @fluid.setter
-    def fluid(self, fluid):
-        raise Exception("you are not allowed to change this property")
+    def update_all(self):
+        # calc_am
+        am = self.fluid.calc_am(EoS, self.compositions)
+        self.__am = am
+        # calc_bm
+        bm = self.fluid.calc_bm(EoS, self.compositions)
+        self.__bm = bm
+        # calc_Dam_DT
+        Dam_DT = self.calc_Dam_DT(self.fluid, self.compositions)
+        self.__Dam_DT = Dam_DT
+        # calc_Dq_DT
+        Dq_DT = self.calc_Dq_DT(am, bm, self.fluid.T, self.EoS, Dam_DT)
+        self.__Dq_DT = Dq_DT
+        # calc_z
+        z = self.calc_z()
+        self.__z = z
+        # calc_cp
+        Cp = self.calc_Cp_mixture()
+        self.__Cp = Cp
+        # calc_S
+        S = self.calc_S_mixture(self.z)
+        self.__S = S
+        # calc_H
+        H = self.calc_H(self.z)
+        self.__H = H
+        # calc_A
+        A = self.calc_A_mixture(self.fluid, self.z)
+        self.__A = A
+        # calc_U
+        U = self.calc_U_mixture(self.fluid, self.z)
+        self.__U = U
+        # calc_G
+        G = self.calc_G_mixture(self.fluid, self.z)
+        self.__G = G
+        # calc_density
+        density = self.calc_density()
+        self.__density = density
+        # calc_viscosity
+        viscosity = self.calc_viscosity()
+        self.__viscosity = viscosity
+        # calc_K(conductivity)
+        conductivity = self.calc_conductivity()
+        self.__conductivity = conductivity
 
-    @property
-    def n(self):
-        return self.__n
+    def calc_conductivity(self):
+        pass
 
-    @n.setter
-    def n(self, n):
-        raise Exception("you are not allowed to change this property")
+    def calc_viscosity(self):
+        pass
 
-    @property
-    def EoS(self):
-        return self.__EoS
+    def calc_mass(self):
+        total_mass = 0
+        for i in range(len(self.fluid.components)):
+            component = self.fluid.components[i]
+            composition = self.compositions[i]
+            MW = component.MW
+            n = self.n * composition
+            mass = n * MW
+            total_mass += mass
+        return total_mass
 
-    @EoS.setter
-    def EoS(self, EoS):
-        raise Exception("you are not allowed to change this property")
+    def calc_v(self):
+        self.__V = self.__z * EoS.R * self.fluid.T / self.fluid.P
+        return self.__V
 
-    @property
-    def compositions(self):
-        return self.__compositions
-
-    @compositions.setter
-    def compositions(self, compositions):
-        raise Exception("you are not allowed to change this property")
+    def calc_density(self):
+        V = self.calc_v() * self.n
+        mass = self.calc_mass()
+        density = mass / V
+        return density
 
     def calc_I(self, EoS, z, bm, fluid):
         P = fluid.P
@@ -93,10 +150,8 @@ class Phase:
         return sigmaj
 
     def calc_Hr(self, fluid, EoS, z):
-        am = fluid.calc_am(EoS, self.compositions)
-        bm = fluid.calc_bm(EoS, self.compositions)
-        Dam_DT = self.calc_Dam_DT(fluid, self.compositions)
-        Dq_DT = self.calc_Dq_DT(am, bm, fluid.T, EoS, Dam_DT)
+        bm = self.bm
+        Dq_DT = self.__Dq_DT
         I = self.calc_I(EoS, z, bm, fluid)
         return EoS.R * fluid.T * (z - 1 + fluid.T * I * Dq_DT)
 
@@ -115,15 +170,15 @@ class Phase:
         fluid = self.fluid
         Hr = self.calc_Hr(fluid, EoS, z)
         H_ig = self.calc_H_ig(fluid)
-        return H_ig + Hr
+        H = H_ig + Hr
+        return H
 
     def calc_entropy_residual(self, fluid, EoS, z):
-        bm = fluid.calc_bm(EoS, self.compositions)
-        am = fluid.calc_am(EoS, self.compositions)
-        Dam_DT = self.calc_Dam_DT(fluid, self.compositions)
+        am = self.am
+        bm = self.bm
         term1 = log(z - EoS.calc_beta(bm, fluid.P, fluid.T))
         term2 = EoS.calc_q(am, bm, fluid.T)
-        term3 = fluid.T * (self.calc_Dq_DT(am, bm, fluid.T, EoS, Dam_DT))
+        term3 = fluid.T * self.__Dq_DT
         I = self.calc_I(EoS, z, bm, fluid)
         S_R = term1 + (term2 + term3) * I
         return S_R
@@ -148,7 +203,6 @@ class Phase:
     def calc_S_ig_mixture(self, fluid):
         T = fluid.T
         P = fluid.P
-        cp_coeff = fluid.components.Cp_coeffs
         mixture_S_ig = 0
         count = len(fluid.components)
         for i in range(count):
@@ -158,14 +212,14 @@ class Phase:
             mixture_S_ig += composition * S_ig_i
         return mixture_S_ig
 
-    def calc_mixture_entropy(self, z):
+    def calc_S_mixture(self, z):
         EoS = self.__EoS
         fluid = self.fluid
         S = self.calc_entropy_residual(fluid, EoS, z) + self.calc_S_ig_mixture(fluid)
         return S
 
     def calc_G_mixture(self, fluid, z):
-        G_mixture = self.calc_H(z) - fluid.T * self.calc_mixture_entropy(z)
+        G_mixture = self.calc_H(z) - fluid.T * self.calc_S_mixture(z)
         return G_mixture
 
     def calc_U_mixture(self, fluid, z):
@@ -173,25 +227,25 @@ class Phase:
         return U_mixture
 
     def calc_A_mixture(self, fluid, z):
-        A_mixture = self.calc_U_mixture(fluid, z) - fluid.T * self.calc_mixture_entropy(z)
+        A_mixture = self.calc_U_mixture(fluid, z) - fluid.T * self.calc_S_mixture(z)
         return A_mixture
 
     def calc_A_for_EOS(self, fluid, EoS):
-        am = fluid.calc_am(EoS, self.compositions)
+        am = self.am
         P = fluid.P
         T = fluid.T
         A = (am * P) / ((EoS.R ** 2) * T ** 2)
         return A
 
     def calc_B_for_EOS(self, fluid, EoS):
-        bm = fluid.calc_bm(EoS, self.compositions)
+        bm = self.bm
         P = fluid.P
         T = fluid.T
         B = (bm * P) / (EoS.R * T)
         return B
 
     def calc_DB_DT(self, fluid, EoS):
-        bm = fluid.calc_bm(EoS, self.compositions)
+        bm = self.bm
         P = fluid.P
         T = fluid.T
         DB_DT = -(bm * P) / (EoS.R * T ** 2)
@@ -201,8 +255,8 @@ class Phase:
         P = fluid.P
         T = fluid.T
         R = EoS.R
-        am = fluid.calc_am(EoS, self.compositions)
-        Dam_DT = self.calc_Dam_DT(fluid, self.compositions)
+        am = self.am
+        Dam_DT = self.__Dam_DT
         term1 = P * R ** 2 * T ** 2 * Dam_DT
         term2 = 2 * R ** 2 * T * P * am
         term3 = R ** 4 * T ** 4
@@ -237,15 +291,15 @@ class Phase:
         return sigmaj
 
     def calc_D2q_DT2(self, fluid, EoS):
-        bm = fluid.calc_bm(EoS, self.compositions)
-        am = fluid.calc_am(EoS, self.compositions)
+        am = self.am
+        bm = self.bm
         T = fluid.T
         R = EoS.R
         term1 = (bm * R * T)
         term2 = (bm * R * T ** 2)
         term3 = self.calc_D2am_DT2(fluid, self.compositions)
-        term4 = bm * R * self.calc_Dam_DT(fluid, self.compositions)
-        term5 = self.calc_Dam_DT(fluid, self.compositions)
+        term4 = bm * R * self.__Dam_DT
+        term5 = self.__Dam_DT
         term6 = 2 * bm * R * T * am
         D2q_DT2 = ((term3 * term1) - term4) / (term1 ** 2) - ((term5 * term2) - term6) / (term2 ** 2)
         return D2q_DT2
@@ -281,11 +335,11 @@ class Phase:
         fluid = self.fluid
         T = fluid.T
         R = EoS.R
-        bm = fluid.calc_bm(EoS, self.compositions)
-        am = fluid.calc_am(EoS, self.compositions)
-        Dam_DT = self.calc_Dam_DT(fluid, self.compositions)
+        am = self.am
+        bm = self.bm
+        Dam_DT = self.__Dam_DT
         I = self.calc_I(EoS, z, bm, fluid)
-        Dq_DT = self.calc_Dq_DT(am, bm, T, EoS, Dam_DT)
+        Dq_DT = self.__Dq_DT
         DZ_DT = self.calc_DZ_DT(fluid, EoS, z)
         DI_DT = self.calc_DI_DT(EoS, z, fluid)
         D2q_DT2 = self.calc_D2q_DT2(fluid, EoS)
@@ -293,3 +347,155 @@ class Phase:
         term2 = DZ_DT + I * Dq_DT + T * I * D2q_DT2 + T * DI_DT * Dq_DT
         CP_R = R * term1 + R * T * term2
         return CP_R
+
+    @property
+    def fluid(self):
+        return self.__fluid
+
+    @fluid.setter
+    def fluid(self, fluid):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def am(self):
+        return self.__am
+
+    @am.setter
+    def am(self, n):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def bm(self):
+        return self.__bm
+
+    @bm.setter
+    def bm(self, n):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def n(self):
+        return self.__n
+
+    @n.setter
+    def n(self, n):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def z(self):
+        return self.__z
+
+    @z.setter
+    def z(self, z):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def H(self):
+        return self.__H
+
+    @H.setter
+    def H(self, H):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def A(self):
+        return self.__A
+
+    @A.setter
+    def A(self, A):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def Cp(self):
+        return self.__Cp
+
+    @Cp.setter
+    def Cp(self, Cp):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def G(self):
+        return self.__G
+
+    @G.setter
+    def G(self, G):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def EoS(self):
+        return self.__EoS
+
+    @EoS.setter
+    def EoS(self, EoS):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def compositions(self):
+        return self.__compositions
+
+    @compositions.setter
+    def compositions(self, compositions):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def density(self):
+        return self.__density
+
+    @density.setter
+    def density(self, density):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def viscosity(self):
+        return self.__viscosity
+
+    @viscosity.setter
+    def viscosity(self, viscosity):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def conductivity(self):
+        return self.__conductivity
+
+    @conductivity.setter
+    def viscosity(self, conductivity):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def S(self):
+        return self.__S
+
+    @S.setter
+    def S(self, S):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def Dam_DT(self):
+        return self.__Dam_DT
+
+    @Dam_DT.setter
+    def Dam_DT(self, Dam_DT):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def Dq_DT(self):
+        return self.__Dq_DT
+
+    @Dq_DT.setter
+    def Dq_DT(self, Dq_DT):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def V(self):
+        return self.__V
+
+    @V.setter
+    def V(self, V):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def U(self):
+        return self.__U
+
+    @U.setter
+    def U(self, U):
+        raise Exception("you are not allowed to change this property")
