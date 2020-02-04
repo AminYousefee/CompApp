@@ -457,7 +457,7 @@ class Phase:
         return self.__conductivity
 
     @conductivity.setter
-    def viscosity(self, conductivity):
+    def conductivity(self, conductivity):
         raise Exception("you are not allowed to change this property")
 
     @property
