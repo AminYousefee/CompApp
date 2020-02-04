@@ -15,7 +15,7 @@ def calc_H_ig_i(cp_coeffs, T, T0):
 
 
 class Phase:
-    def __init__(self, fluid, compositions, EoS, n):
+    def __init__(self, fluid, compositions, EoS, n, Vc, dipole_moment):
         self.__G = 0
         self.__density = 0
         self.__viscosity = 0
@@ -35,6 +35,9 @@ class Phase:
         self.__compositions = compositions
         self.__EoS = EoS
         self.__n = n
+        self.__Vc = Vc
+        self.__dipole = dipole_moment
+        self.__MW = 0
 
     def calc_z(self):
         pass
