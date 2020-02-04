@@ -5,9 +5,8 @@ from LiquidPhase import LiquidPhase
 
 
 class Fluid:
-    required_property = dict()
 
-    def __init__(self, n, T, P, components, compositions):
+    def __init__(self, n, T, P, components, compositions, EoS):
         if len(components) != len(compositions):
             raise Exception("for each component we need a composition")
         self.__n = n
@@ -16,7 +15,26 @@ class Fluid:
         self.__components = components
         for component in components:
             component.fluid = self
+        self.__EoS = EoS
         self.__compositions = compositions
+        self.__phase_list = []
+        self.update_all()
+
+    def update_all(self):
+        self.__phase_list = self.flash_calc(self.__EoS)
+
+    def update(self, new_condition):
+        update_count = len(new_condition)
+        for prop in new_condition:
+            if prop == "T":
+                self.__T = new_condition["T"]
+            if prop == "P":
+                self.__P = new_condition["P"]
+            if prop == "composition":
+                if len(self.compositions) != len(new_condition["composition"]):
+                    raise Exception("number of compositions is not match with component number")
+                self.__compositions = new_condition["composition"]
+            self.update_all()
 
     def calc_am(self, EoS, compositions):
         self.calc_alpha(EoS)  # for all component calc alpha
@@ -52,6 +70,14 @@ class Fluid:
     @T.setter
     def T(self, value):
         self.__T = value
+
+    @property
+    def EoS(self):
+        return self.__EoS
+
+    @EoS.setter
+    def EoS(self, EoS):
+        self.__EoS = EoS
 
     @property
     def n(self):
@@ -99,6 +125,14 @@ class Fluid:
 
     @bm.setter
     def bm(self, value):
+        raise Exception("you are not allowed to change this property")
+
+    @property
+    def phase_list(self):
+        return self.__phase_list
+
+    @phase_list.setter
+    def phase_list(self, value):
         raise Exception("you are not allowed to change this property")
 
     def calc_Gr(self, EoS, z):

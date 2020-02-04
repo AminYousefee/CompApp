@@ -40,16 +40,17 @@ class PureComponent(Component):
         PureComponent.all_pure_components[self.__name] = self
         self.__all_props = initial_prop_dict.copy()  # this line must be deleted after saving pure components
 
-    def load_component(self):
-        name = self.__name
+    @staticmethod
+    def load_component(name):
         path = "components\\{}.dat".format(name)
         with open(path, "rb") as file:
             all_initial_props = pickle.load(file)
             component = PureComponent(all_initial_props)
             return component
 
-    def save_component(self, properties_dict):
-        name = self.__name
+    @staticmethod
+    def save_component(properties_dict):
+        name = properties_dict["name"]
         path = "components\\{}.dat".format(name)
         with open(path, "wb") as file:
             pickle.dump(properties_dict, file)

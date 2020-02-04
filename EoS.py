@@ -130,7 +130,7 @@ class EoS:
         return self.__sigma
 
     @sigma.setter
-    def sigma(self, value):
+    def sigma(self, sigma):
         raise Exception("you are not allowed to change this property")
 
     def a_calculator(self, component):
@@ -146,5 +146,5 @@ class EoS:
         return a + b * component.omega - c * (component.omega ** 2)
 
     # now we need to calc alpha for each component
-    # we need tempreture but temp is belonged to fluid and here we don't access Fluid
+    # we need temperature but temp is belonged to fluid and here we don't access Fluid
     #
