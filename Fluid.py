@@ -22,7 +22,7 @@ class Fluid:
     def update_all(self, bubble_dew_pressure_acc):
         self.__phase_list = self.flash_calc(self.__EoS, bubble_dew_pressure_acc)
 
-    def update(self, new_condition, bubble_dew_pressure_acc):
+    def update(self, new_condition):
         for prop in new_condition:
             if prop == "T":
                 self.__T = new_condition["T"]
