@@ -12,9 +12,6 @@ class GasPhase(Phase):
         beta = self.EoS.calc_beta(self.bm, self.fluid.P, self.fluid.T)
         z = self.EoS.calc_z_gas(q, beta)
 
-    def calc_high_pressure_viscosity(self):
-
-        pass
 
 
 
@@ -183,6 +180,105 @@ class GasPhase(Phase):
         F = 2.43787
         T = self.calc_T_star_m()
         omega_v = (A * (T) ** -B) + C * (math.e) ** (-D * T) + E * (math.e) ** (-F * T)
+        return omega_v
+    def calc_y(self):
+        ro=self.fluid.ro
+        Vc=self.calc_V_c_m()
+        y=(ro*Vc)/6
+        return y
+    def calc_G1(self):
+        G1=(1-0.5*self.calc_y())/(1-self.calc_y())**3
+        return G1
+    def calc_E1(self):
+        E1=6.324+50.2412*self.calc_w_m()-51.68*self.calc_mu_4_m()+1189*self.calc_kapa_m()
+        return E1
+    def calc_E2(self):
+        E2=1.21*10**-3-1.154*10**-3*self.calc_w_m()-6.257*10**-3*self.calc_mu_4_m()+0.03728*self.calc_kapa_m()
+        return E2
+    def calc_E3(self):
+        E3=5.283+254.209*self.calc_w_m()-168.48*self.calc_mu_4_m()+3898*self.calc_kapa_m()
+        return E3
+    def calc_E4(self):
+        E4=6.623+38.096*self.calc_w_m()-8.464*self.calc_mu_4_m()+31.42*self.calc_kapa_m()
+        return E4
+    def calc_E5(self):
+        E5=19.745+7.63*self.calc_w_m()-14.354*self.calc_mu_4_m()+31.53*self.calc_kapa_m()
+        return E5
+    def calc_E6(self):
+        E6=-1.9-12.537*self.calc_w_m()+4.985*self.calc_mu_4_m()-18.15*self.calc_kapa_m()
+        return E6
+    def calc_E7(self):
+        E7=24.275+3.45*self.calc_w_m()-11.291*self.calc_mu_4_m()+69.35*self.calc_kapa_m()
+        return E7
+    def calc_E8(self):
+        E8=0.7972+1.117*self.calc_w_m()+0.01235*self.calc_mu_4_m()-4.117*self.calc_kapa_m()
+        return E8
+    def calc_E9(self):
+        E9=-0.2382+0.0677*self.calc_w_m()-0.8163*self.calc_mu_4_m()+4.025*self.calc_kapa_m()
+        return E9
+    def calc_E10(self):
+        E10=0.06863+0.3479*self.calc_w_m()+0.5926*self.calc_mu_4_m()-0.727*self.calc_kapa_m()
+        return E10
+    def calc_G2(self):
+        y=self.calc_y()
+        E1=self.calc_E1()
+        E2=self.calc_E2()
+        E3=self.calc_E3()
+        E4=self.calc_E4()
+        E5=self.calc_E5()
+        G1=self.calc_G1()
+        term1=E1*((1-math.e**(-E4*y))/y)
+        term2=E2*G1*math.e**(E5*y)
+        term3=E3*G1
+        term4=E1*E4+E2+E3
+        G2=(term1+term2+term3)/term4
+        return G2
+    def calc_viscosity_star_star(self):
+        y=self.calc_y()
+        E7=self.calc_E7()
+        G2=self.calc_G2()
+        E8=self.calc_E8()
+        E9=self.calc_E9()
+        E10=self.calc_E10()
+        T=self.calc_T_star_m()
+        term1=E7*y
+        term2=E8+E9*T**-1+E10*T**-2
+        visco_star_Star=term1*math.e**term2
+        return visco_star_Star
+    def calc_visco_star(self):
+        T=self.calc_T_star_m()
+        omega_v=self.calc_omega_v()
+        Fc=self.calc_F_c_m()
+        G2=self.calc_G2()
+        y=self.calc_y()
+        E6=self.calc_E6()
+        visco_Star_star=self.calc_viscosity_star_star()
+        term1=(T**0.5)/omega_v
+        term2=(Fc*(G2**-1+E6*y))
+        visco_Star=term1*term2+visco_Star_star
+        return visco_Star
+
+    def calc_high_pressure_viscosity(self):
+        Tc=self.calc_T_c_m()
+        M=self.calc_M_m()
+        Vc=self.calc_V_c_m()
+        visco_star=self.calc_visco_star()
+        term1=(M*Tc)**0.5
+        term2=Vc**(2/3)
+        viscosity=visco_star*((36.344*term1)/term2)
+        return viscosity
+
+
+
+
+
+
+
+
+
+
+
+
 
     def calc_viscosity(self):
         min_high_pressure = 10 * 101325
