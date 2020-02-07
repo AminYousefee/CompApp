@@ -16,57 +16,7 @@ class GasPhase(Phase):
 
         pass
 
-    def calc_w_ij(self):
-        count = len(self.fluid.components)
-        w_ij = []
-        for i in range(count):
-            for j in range(count):
-                w_i = (self.fluid.components[i].w)
-                w_j = (self.fluid.components[j].w)
-                w__i_j = (w_i * w_j) / 2
-                w_ij.append(w__i_j)
-        return w_ij
 
-    def calc_eps_K_ij(self, boltzman):
-        count = len(self.fluid.components)
-        eps_k_ij = []
-        for i in range(count):
-            for j in range(count):
-                eps_i = (self.fluid.components[i].Tc) / 1.2593
-                eps_j = (self.fluid.components[j].Tc) / 1.2593
-                eps_K__i_j = ((eps_i / boltzman) * (eps_j / boltzman)) ** 0.5
-                eps_k_ij.append(eps_K__i_j)
-        return eps_k_ij
-
-    def calc_sigma_ij(self):
-        count = len(self.fluid.components)
-        sigma_ij = []
-        for i in range(count):
-            for j in range(count):
-                sigma_i = ((self.fluid.components[i].Vc * 10 ** 6) ** (1 / 3)) * 0.809
-                sigma_j = ((self.fluid.components[j].Vc * 10 ** 6) ** (1 / 3)) * 0.809
-                sigma_i_j = (sigma_i * sigma_j) ** 0.5
-                sigma_ij.append(sigma_i_j)
-        return sigma_ij
-
-    def calc_kapa(self):
-        count = len(self.fluid.components)
-        kapa_ij = []
-        for i in range(count):
-            for j in range(count):
-                kapa_i_j = (self.fluid.components[i].kapa * self.fluid.components[j].kapa) ** 0.5
-                kapa_ij.append(kapa_i_j)
-        return kapa_ij
-
-    def calc_M_ij(self):
-        count = len(self.fluid.components)
-        M_ij = []
-        for i in range(count):
-            for j in range(count):
-                Mij = (2 * self.fluid.components[i].MW * self.fluid.components[j].MW * 10 ** 3) / (
-                            self.fluid.components[i].MW + self.fluid.components[j].MW)
-                M_ij.append(Mij)
-        return M_ij
 
     def calc_kapa_m(self):
         components = self.fluid.components
@@ -77,7 +27,8 @@ class GasPhase(Phase):
             for i in range(count):
                 zi = self.compositions[i]
                 zj = self.compositions[j]
-                term1 = zi * zj * (self.calc_kapa())
+                kapa_i_j = (self.fluid.components[i].kapa * self.fluid.components[j].kapa) ** 0.5
+                term1 = zi * zj * (kapa_i_j)
                 kapai += term1
             kapaj += kapai
         return kapaj
@@ -91,7 +42,10 @@ class GasPhase(Phase):
             for i in range(count):
                 zi = self.compositions[i]
                 zj = self.compositions[j]
-                term1 = zi * zj * ((self.calc_sigma_ij()) ** 3)
+                sigma_i = ((self.fluid.components[i].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                sigma_j = ((self.fluid.components[j].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                sigma_i_j = (sigma_i * sigma_j) ** 0.5
+                term1 = zi * zj * ((sigma_i_j()) ** 3)
                 sigmai += term1
             sigmaj += sigmai
         return sigmaj
@@ -107,7 +61,9 @@ class GasPhase(Phase):
                 zj = self.compositions[j]
                 mui = self.fluid.components[i].mu
                 muj = self.fluid.components[j].mu
-                term1 = (zi * zj * mui ** 2 * muj ** 2) / ((self.calc_sigma_ij()) ** 3)
+                sigmai = ((self.fluid.components[i].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                sigmaj = ((self.fluid.components[j].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                term1 = (zi * zj * mui ** 2 * muj ** 2) / (((sigmai * sigmaj) ** 0.5) ** 3)
                 mu_4_i += term1
             mu_4_j += mu_4_i
         mu_4_m = self.calc_sigma_m() ** 3 * mu_4_j
@@ -122,7 +78,12 @@ class GasPhase(Phase):
             for i in range(count):
                 zi = self.compositions[i]
                 zj = self.compositions[j]
-                term1 = (zi * zj * self.calc_w_ij() * ((self.calc_sigma_ij()) ** 3))
+                sigmai = ((self.fluid.components[i].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                sigmaj = ((self.fluid.components[j].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                w_i = (self.fluid.components[i].w)
+                w_j = (self.fluid.components[j].w)
+                w__i_j = (w_i * w_j) / 2
+                term1 = (zi * zj * w__i_j * (((sigmai * sigmaj) ** 0.5) ** 3))
                 w_i += term1
             w_j += w_i
         w_m = w_j / self.calc_sigma_m() ** 3
@@ -137,8 +98,15 @@ class GasPhase(Phase):
             for i in range(count):
                 zi = self.compositions[i]
                 zj = self.compositions[j]
-                term1 = (zi * zj * (self.calc_M_ij() ** 0.5) * ((self.calc_sigma_ij()) ** 2) * (
-                    self.calc_eps_K_ij(1.38 * 10 ** -23)))
+                sigmai = ((self.fluid.components[i].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                sigmaj = ((self.fluid.components[j].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                M_ij = (2 * self.fluid.components[i].MW * self.fluid.components[j].MW * 10 ** 3) / (
+                        self.fluid.components[i].MW + self.fluid.components[j].MW)
+                eps_i = (self.fluid.components[i].Tc) / 1.2593
+                eps_j = (self.fluid.components[j].Tc) / 1.2593
+                eps_K__i_j = ((eps_i / (1.38 * 10 ** -23)) * (eps_j / (1.38 * 10 ** -23))) ** 0.5
+                term1 = (zi * zj * (M_ij ** 0.5) * (((sigmai * sigmaj) ** 0.5) ** 2) * (
+                    eps_K__i_j))
                 M_i += term1
             M_j += M_i
         term2 = self.calc_sigma_m() ** 2 * self.calc_eps_k_m()
@@ -155,8 +123,17 @@ class GasPhase(Phase):
             for i in range(count):
                 zi = self.compositions[i]
                 zj = self.compositions[j]
-                term1 = (zi * zj * self.calc_w_ij() * ((self.calc_sigma_ij()) ** 3) * (
-                    self.calc_eps_K_ij(1.38 * 10 ** -23)))
+                eps_i = (self.fluid.components[i].Tc) / 1.2593
+                eps_j = (self.fluid.components[j].Tc) / 1.2593
+                eps_K__i_j = ((eps_i / (1.38 * 10 ** -23)) * (eps_j / (1.38 * 10 ** -23))) ** 0.5
+                sigma_i = ((self.fluid.components[i].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                sigma_j = ((self.fluid.components[j].Vc * 10 ** 6) ** (1 / 3)) * 0.809
+                sigma_i_j = (sigma_i * sigma_j) ** 0.5
+                w_i = (self.fluid.components[i].w)
+                w_j = (self.fluid.components[j].w)
+                w__i_j = (w_i * w_j) / 2
+
+                term1 = (zi * zj * w__i_j * (sigma_i_j ** 3) * eps_K__i_j)
                 eps_k_i += term1
             eps_k_j += eps_k_i
         eps_k_m = eps_k_j / self.calc_sigma_m() ** 3
